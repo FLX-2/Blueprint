@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blueprint
 
-## Getting Started
+Paste any strength program and it runs itself. Ask your training history anything.
 
-First, run the development server:
+One web app, three modes:
+
+- **Plan:** import a program, check what the AI read, adapt the week.
+- **Train:** run a session at the gym (phone-first, always dark).
+- **Review:** ask questions about your history and get exact, visual answers (codename *Plateau*).
+
+The rule throughout: **AI for the fuzzy parts, code for the exact parts.** The model reads messy input and proposes things. Code does every calculation and gets the final say, and the interface always shows which is which.
+
+## Getting started
+
+Requires Node 24+.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. The app runs in demo mode with a fictional athlete and 18 months of generated history.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Script | What it does |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Generate route types, then `tsc` |
+| `npm test` | Vitest: calculations and the seed data's story |
+| `npm run seed:csv` | Writes the sample history to `public/demo/strong-export.csv` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project layout
 
-## Learn More
+```
+design/            Design tokens (DTCG JSON, source of truth) and usage rules
+docs/              Concepts, app structure and core flows
+src/styles/        tokens.css: CSS variables, themes, Tailwind mapping, AI marking classes
+src/app/(app)/     Routes with the app shell: plan, train, review, settings
+src/app/(focus)/   Full-screen routes without navigation: gym mode, welcome
+src/components/    Shell (nav, Ask bar), UI primitives, charts
+src/lib/domain/    Types and plain-language descriptions of programs and rules
+src/lib/calc/      Deterministic training math (e1RM, weekly sets, rounding)
+src/data/seed/     Sample athlete: exercises, GZCLP program, generated history
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Design system
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Direction "Annotated": Drafting Table clarity with Field Journal's editorial voice. Dark by default; light and system in Settings.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Newsreader** for titles, insights and AI reasoning. **Geist** for every control. **Geist Mono** for every number.
+- **Amber means AI and nothing else:** anything the AI produced that you haven't confirmed (`.ai-mark`, `.ai-proposal`).
+- Tailwind's default palette is removed, so components can only use semantic tokens (`bg-surface`, `text-muted`, `border-ai`…).
 
-## Deploy on Vercel
+Full rules: [design/README.md](design/README.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Seed data
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`src/data/seed/history.ts` generates the same history on every build. It's built to tell one story, which the tests in `seed.test.ts` check: in August 2026 the athlete drops from four training days to three, weekly chest sets fall from about 14 to 8, and bench press stalls at 205 lb × 3–4 while squat keeps climbing.
+
+## Status
+
+Phase 0 (foundation) is done: tokens, app shell, seed data, placeholder routes. Next is Phase 1, Review: CSV import (F5), then Ask (F4). See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

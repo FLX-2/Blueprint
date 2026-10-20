@@ -1,0 +1,318 @@
+/*
+ * Blueprint design tokens · Direction 04 "Annotated"
+ * Generated from tokens.json. Dark is the default theme.
+ *
+ * Theme switching: set data-theme on <html>
+ *   data-theme="dark"   → dark (also the default with no attribute)
+ *   data-theme="light"  → light
+ *   data-theme="system" → follows the OS setting
+ *
+ * Gym mode: add .gym (or data-mode="train") to a container to force the
+ * high-contrast workout surface, whatever the theme.
+ */
+
+/* ---------- Theme-independent tokens ---------- */
+/* Fonts load via next/font (Newsreader, Geist, Geist Mono), which sets
+   --font-newsreader / --font-geist / --font-geist-mono on <html>. */
+:root {
+  --bp-font-display: var(--font-newsreader, "Newsreader"), Georgia, serif;
+  --bp-font-ui: var(--font-geist, "Geist"), system-ui, sans-serif;
+  --bp-font-mono: var(--font-geist-mono, "Geist Mono"), ui-monospace, monospace;
+
+  --bp-text-xs: 12px;
+  --bp-text-sm: 13px;
+  --bp-text-base: 14px;
+  --bp-text-md: 15px;
+  --bp-text-lg: 17px;
+  --bp-text-xl: 20px;
+  --bp-text-2xl: 24px;
+  --bp-text-3xl: 32px;
+  --bp-text-4xl: 44px;
+  --bp-text-5xl: 60px;
+  --bp-text-gym: 108px;
+
+  --bp-space-0: 0px;
+  --bp-space-1: 4px;
+  --bp-space-2: 8px;
+  --bp-space-3: 12px;
+  --bp-space-4: 16px;
+  --bp-space-5: 20px;
+  --bp-space-6: 24px;
+  --bp-space-8: 32px;
+  --bp-space-10: 40px;
+  --bp-space-12: 48px;
+  --bp-space-14: 56px;
+  --bp-space-16: 64px;
+
+  --bp-radius-xs: 4px;
+  --bp-radius-sm: 6px;
+  --bp-radius-md: 8px;
+  --bp-radius-lg: 10px;
+  --bp-radius-xl: 14px;
+  --bp-radius-2xl: 28px;
+  --bp-radius-full: 999px;
+
+  --bp-border-hairline: 1px;
+  --bp-border-ai: 1.5px;
+  --bp-border-focus: 2px;
+
+  --bp-control-sm: 36px;
+  --bp-control-md: 44px;
+  --bp-control-lg: 60px;
+  --bp-content-max: 1280px;
+  --bp-reading-max: 640px;
+
+  --bp-duration-fast: 120ms;
+  --bp-duration-base: 200ms;
+  --bp-duration-slow: 320ms;
+  --bp-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --bp-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ---------- Dark (default) ---------- */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bp-bg: #121311;
+  --bp-bg-grid: #171816;
+  --bp-surface: #1B1B19;
+  --bp-surface-raised: #232421;
+  --bp-border: #30312D;
+  --bp-border-strong: #ECEBE5;
+  --bp-text: #ECEBE5;
+  --bp-text-secondary: #C9C8C0;
+  --bp-text-muted: #A3A29A;
+  --bp-text-inverse: #121311;
+  --bp-accent: #7DC59C;
+  --bp-accent-fg: #0F1512;
+  --bp-link: #9FD6B6;
+  --bp-ai: #E8C95A;
+  --bp-ai-text: #E8C95A;
+  --bp-ai-wash: #2A2819;
+  --bp-ai-mark: #4A4224;
+  --bp-danger: #F08A7E;
+  --bp-danger-wash: #2E1A17;
+  --bp-focus: #7DC59C;
+  --bp-chart-line: #ECEBE5;
+  --bp-chart-series-2: #7DC59C;
+  --bp-chart-grid: #30312D;
+  --bp-chart-band: #2A2819;
+  --bp-gym-bg: #0A0A09;
+  --bp-gym-text: #ECEBE5;
+  --bp-gym-muted: #A3A29A;
+  --bp-gym-track: #30312D;
+  --bp-shadow-popover: 0 8px 24px #00000066;
+}
+
+/* ---------- Light ---------- */
+[data-theme="light"] {
+  color-scheme: light;
+  --bp-bg: #F4F4F1;
+  --bp-bg-grid: #ECEBE5;
+  --bp-surface: #FFFFFF;
+  --bp-surface-raised: #F0EFEA;
+  --bp-border: #DEDDD6;
+  --bp-border-strong: #1B1B19;
+  --bp-text: #1B1B19;
+  --bp-text-secondary: #45443F;
+  --bp-text-muted: #6B6A64;
+  --bp-text-inverse: #FFFFFF;
+  --bp-accent: #2F6B4F;
+  --bp-accent-fg: #FFFFFF;
+  --bp-link: #2F6B4F;
+  --bp-ai: #B08A00;
+  --bp-ai-text: #6B5A00;
+  --bp-ai-wash: #FBF6D6;
+  --bp-ai-mark: #F2E27A;
+  --bp-danger: #B3261E;
+  --bp-danger-wash: #FBE9E6;
+  --bp-focus: #2F6B4F;
+  --bp-chart-line: #1B1B19;
+  --bp-chart-series-2: #2F6B4F;
+  --bp-chart-grid: #DEDDD6;
+  --bp-chart-band: #FBF6D6;
+  --bp-gym-bg: #1B1B19;
+  --bp-gym-text: #F4F4F1;
+  --bp-gym-muted: #A3A29A;
+  --bp-gym-track: #3A3A36;
+  --bp-shadow-popover: 0 8px 24px #1B1B191F;
+}
+
+/* ---------- System (follows OS) ---------- */
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    color-scheme: light;
+    --bp-bg: #F4F4F1;
+    --bp-bg-grid: #ECEBE5;
+    --bp-surface: #FFFFFF;
+    --bp-surface-raised: #F0EFEA;
+    --bp-border: #DEDDD6;
+    --bp-border-strong: #1B1B19;
+    --bp-text: #1B1B19;
+    --bp-text-secondary: #45443F;
+    --bp-text-muted: #6B6A64;
+    --bp-text-inverse: #FFFFFF;
+    --bp-accent: #2F6B4F;
+    --bp-accent-fg: #FFFFFF;
+    --bp-link: #2F6B4F;
+    --bp-ai: #B08A00;
+    --bp-ai-text: #6B5A00;
+    --bp-ai-wash: #FBF6D6;
+    --bp-ai-mark: #F2E27A;
+    --bp-danger: #B3261E;
+    --bp-danger-wash: #FBE9E6;
+    --bp-focus: #2F6B4F;
+    --bp-chart-line: #1B1B19;
+    --bp-chart-series-2: #2F6B4F;
+    --bp-chart-grid: #DEDDD6;
+    --bp-chart-band: #FBF6D6;
+    --bp-gym-bg: #1B1B19;
+    --bp-gym-text: #F4F4F1;
+    --bp-gym-muted: #A3A29A;
+    --bp-gym-track: #3A3A36;
+    --bp-shadow-popover: 0 8px 24px #1B1B191F;
+  }
+}
+
+/* ---------- Gym mode surface ---------- */
+.gym,
+[data-mode="train"] {
+  color-scheme: dark;
+  background: var(--bp-gym-bg);
+  color: var(--bp-gym-text);
+}
+
+/* ---------- Tailwind v4 mapping ---------- */
+/* Import this file after `@import "tailwindcss";` so utilities like
+   bg-surface, text-fg, text-muted, border-ai, font-display and rounded-lg exist. */
+
+/* Drop Tailwind's default palette: components may only use semantic colors.
+   (transparent, current and inherit still work.) */
+@theme {
+  --color-*: initial;
+  --text-*: initial;
+}
+
+@theme inline {
+  --color-bg: var(--bp-bg);
+  --color-bg-grid: var(--bp-bg-grid);
+  --color-surface: var(--bp-surface);
+  --color-surface-raised: var(--bp-surface-raised);
+  --color-border: var(--bp-border);
+  --color-border-strong: var(--bp-border-strong);
+  --color-fg: var(--bp-text);
+  --color-fg-secondary: var(--bp-text-secondary);
+  --color-muted: var(--bp-text-muted);
+  --color-inverse: var(--bp-text-inverse);
+  --color-accent: var(--bp-accent);
+  --color-accent-fg: var(--bp-accent-fg);
+  --color-link: var(--bp-link);
+  --color-ai: var(--bp-ai);
+  --color-ai-text: var(--bp-ai-text);
+  --color-ai-wash: var(--bp-ai-wash);
+  --color-ai-mark: var(--bp-ai-mark);
+  --color-danger: var(--bp-danger);
+  --color-danger-wash: var(--bp-danger-wash);
+  --color-focus: var(--bp-focus);
+  --color-gym-bg: var(--bp-gym-bg);
+  --color-gym-text: var(--bp-gym-text);
+  --color-gym-muted: var(--bp-gym-muted);
+  --color-gym-track: var(--bp-gym-track);
+
+  --font-display: var(--bp-font-display);
+  --font-sans: var(--bp-font-ui);
+  --font-mono: var(--bp-font-mono);
+
+  --text-xs: var(--bp-text-xs);
+  --text-xs--line-height: 1.35;
+  --text-sm: var(--bp-text-sm);
+  --text-sm--line-height: 1.45;
+  --text-base: var(--bp-text-base);
+  --text-base--line-height: 1.45;
+  --text-md: var(--bp-text-md);
+  --text-md--line-height: 1.6;
+  --text-lg: var(--bp-text-lg);
+  --text-lg--line-height: 1.45;
+  --text-xl: var(--bp-text-xl);
+  --text-xl--line-height: 1.35;
+  --text-2xl: var(--bp-text-2xl);
+  --text-2xl--line-height: 1.3;
+  --text-3xl: var(--bp-text-3xl);
+  --text-3xl--line-height: 1.15;
+  --text-4xl: var(--bp-text-4xl);
+  --text-4xl--line-height: 1.05;
+  --text-5xl: var(--bp-text-5xl);
+  --text-5xl--line-height: 1;
+  --text-gym: var(--bp-text-gym);
+  --text-gym--line-height: 0.9;
+
+  --radius-xs: var(--bp-radius-xs);
+  --radius-sm: var(--bp-radius-sm);
+  --radius-md: var(--bp-radius-md);
+  --radius-lg: var(--bp-radius-lg);
+  --radius-xl: var(--bp-radius-xl);
+  --radius-2xl: var(--bp-radius-2xl);
+
+  --shadow-popover: var(--bp-shadow-popover);
+  --ease-standard: var(--bp-ease-standard);
+}
+
+/* ---------- Base ---------- */
+body {
+  background: var(--bp-bg);
+  color: var(--bp-text);
+  font-family: var(--bp-font-ui);
+  font-size: var(--bp-text-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: var(--bp-border-focus) solid var(--bp-focus);
+  outline-offset: 2px;
+}
+
+/* Every number in the app: tabular so columns and timers don't jitter. */
+.num,
+[data-num] {
+  font-family: var(--bp-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- AI marking primitives ---------- */
+/* Inline AI-generated or AI-extracted text awaiting confirmation. */
+.ai-mark {
+  background: var(--bp-ai-mark);
+  color: var(--bp-text);
+  padding: 0 3px;
+  border-bottom: var(--bp-border-ai) dashed var(--bp-ai);
+}
+
+/* A block the AI proposed (rule, change, swap). Removed once the user confirms. */
+.ai-proposal {
+  background: var(--bp-ai-wash);
+  border: var(--bp-border-ai) dashed var(--bp-ai);
+  border-radius: var(--bp-radius-md);
+}
+
+/* The AI's reasoning, always set in italic serif. */
+.ai-reasoning {
+  font-family: var(--bp-font-display);
+  font-style: italic;
+  font-size: var(--bp-text-lg);
+  line-height: 1.45;
+  color: var(--bp-text-secondary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ai-mark[data-entering] {
+    background-size: 0% 100%;
+    background-image: linear-gradient(var(--bp-ai-mark), var(--bp-ai-mark));
+    background-repeat: no-repeat;
+    background-color: transparent;
+    animation: bp-ink-in var(--bp-duration-slow) var(--bp-ease-standard) forwards;
+  }
+}
+
+@keyframes bp-ink-in {
+  to { background-size: 100% 100%; }
+}
