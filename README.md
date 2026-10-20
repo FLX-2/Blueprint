@@ -78,9 +78,19 @@ AI matching needs `ANTHROPIC_API_KEY` (see `.env.example`). Without it, the impo
 
 Without `ANTHROPIC_API_KEY`, Ask says so and offers a **scripted example** on the sample data: the model's side is scripted, but the tools, number check, charts and evidence all run for real.
 
+## Rule engine
+
+`src/lib/engine/` runs a program's progression rules. It's pure code with no AI: the AI only reads rules out of a pasted program (F1), and this is what runs them.
+
+- **Five rule kinds:** linear, stage-on-failure (with a reset to a share of the last weight or of an estimated 5RM), AMRAP threshold, double progression, and percentage cycles (5/3/1-style training maxes).
+- **State per slot** (tier + exercise), so a lift trained as T1 and T2 progresses separately in each.
+- `prescribe()` gives a day's sets; `applySession()` applies what was logged and returns plain-language events ("Missed reps: switch to 6×2+ at 225 lb."); `stateFromHistory()` works out where a lifter is from their log.
+- Only **confirmed** rules run. Weights round down to what the lifter can load; `platesFor()` gives plates per side.
+
 ## Status
 
 - **Phase 0 (foundation):** tokens, app shell, seed data, placeholder routes.
-- **Phase 1 (Review):** history import with exercise-name cleanup (F5) and Ask with tools, charts and evidence (F4) are done. Next: Phase 2, the rule engine, program import (F1) and gym mode (F2).
+- **Phase 1 (Review):** history import with exercise-name cleanup (F5) and Ask with tools, charts and evidence (F4) are done. 
+- **Phase 2 (Plan + Train):** the rule engine is done and drives Train's targets. Next: program import & review (F1), then gym mode logging (F2).
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

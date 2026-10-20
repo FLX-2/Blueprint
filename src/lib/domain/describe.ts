@@ -9,6 +9,8 @@ const RULE_TITLES: Record<Rule["kind"], string> = {
   linear: "Progress",
   "stage-on-failure": "On failure",
   "amrap-threshold": "Progress",
+  "double-progression": "Progress",
+  "percentage-cycle": "Cycle",
 };
 
 export function ruleTitle(rule: Rule) {
@@ -31,6 +33,14 @@ export function describeRule(rule: Rule) {
     }
     case "amrap-threshold":
       return `Add weight when the last set hits ${rule.repTarget}+ reps`;
+    case "double-progression":
+      return `Add a rep each session from ${rule.repRange.min} to ${rule.repRange.max}, then +${rule.increment.lower} lb lower · +${rule.increment.upper} lb upper and back to ${rule.repRange.min}`;
+    case "percentage-cycle": {
+      const weeks = rule.weeks
+        .map((w) => w.sets.map((s) => `${Math.round(s.percent * 100)}%×${s.reps}${s.amrap ? "+" : ""}`).join(" "))
+        .join(" / ");
+      return `${rule.weeks.length}-week cycle of training-max percentages (${weeks}); then +${rule.increment.lower} lb lower · +${rule.increment.upper} lb upper`;
+    }
   }
 }
 

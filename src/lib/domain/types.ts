@@ -57,41 +57,62 @@ export type SourceSpan = { start: number; end: number };
 
 export type RuleStatus = "proposed" | "confirmed";
 
-/** The progression patterns the rule engine knows how to run. */
-export type Rule =
-  | {
-      id: string;
-      kind: "linear";
-      tier: Tier;
-      /** lb added after a successful session. */
-      increment: { upper: number; lower: number };
-      status: RuleStatus;
-      confidence: number;
-      source?: SourceSpan;
-    }
-  | {
-      id: string;
-      kind: "stage-on-failure";
-      tier: Tier;
-      /** Schemes to step through on each failure, in order. */
-      stages: SetScheme[];
-      /** After the last stage fails: restart at this fraction of the reference weight. */
-      reset: { to: SetScheme; percentOf: "last-weight" | "retest-5rm"; percent: number };
-      status: RuleStatus;
-      confidence: number;
-      source?: SourceSpan;
-    }
-  | {
-      id: string;
-      kind: "amrap-threshold";
-      tier: Tier;
-      /** Add weight once the AMRAP set reaches this many reps. */
-      repTarget: number;
-      increment: { upper: number; lower: number };
-      status: RuleStatus;
-      confidence: number;
-      source?: SourceSpan;
-    };
+/** lb added on progression, by lower- or upper-body lift. */
+export type Increment = { upper: number; lower: number };
+
+/** One week of a percentage cycle (e.g. 5/3/1): sets as fractions of the training max. */
+export type CycleWeek = { sets: Array<{ percent: number; reps: number; amrap: boolean }> };
+
+type RuleBase = {
+  id: string;
+  /** Which slots the rule applies to. */
+  tier: Tier;
+  /** Only confirmed rules run. */
+  status: RuleStatus;
+  /** How sure the import was about this rule, 0–1. */
+  confidence: number;
+  source?: SourceSpan;
+};
+
+/**
+ * The progression patterns the rule engine knows how to run (src/lib/engine).
+ * A tier has one progression rule and, optionally, a stage-on-failure rule
+ * that decides what happens when a session is missed.
+ */
+export type Rule = RuleBase &
+  (
+    | {
+        /** Add weight after every session where all reps were hit. */
+        kind: "linear";
+        increment: Increment;
+      }
+    | {
+        /** On a miss, step to the next scheme at the same weight; after the last, reset lighter. */
+        kind: "stage-on-failure";
+        stages: SetScheme[];
+        reset: { to: SetScheme; percentOf: "last-weight" | "retest-5rm"; percent: number };
+      }
+    | {
+        /** Add weight once the last (AMRAP) set reaches this many reps. */
+        kind: "amrap-threshold";
+        repTarget: number;
+        increment: Increment;
+      }
+    | {
+        /** Add a rep each success until the top of the range, then add weight and drop to the bottom. */
+        kind: "double-progression";
+        repRange: { min: number; max: number };
+        increment: Increment;
+      }
+    | {
+        /** Fixed weekly percentages of a training max; the max goes up after each full cycle. */
+        kind: "percentage-cycle";
+        weeks: CycleWeek[];
+        increment: Increment;
+      }
+  );
+
+export type RuleKind = Rule["kind"];
 
 export type Program = {
   id: string;
