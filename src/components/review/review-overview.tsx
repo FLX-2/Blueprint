@@ -97,12 +97,12 @@ export function ReviewOverview() {
         ) : null}
 
         <Card className="min-w-0 flex-[1_1_320px]">
-          <CardHeader title="Ask about it" meta="Answers arrive in Phase 1" />
+          <CardHeader title="Ask about it" meta="Answers come with the sets behind them" />
           <ul className="m-0 flex list-none flex-col gap-2 p-4">
             {SUGGESTED_QUESTIONS.map((q) => (
               <li key={q}>
                 <Link
-                  href="/review/ask"
+                  href={`/review/ask?q=${encodeURIComponent(q)}`}
                   className="flex min-h-11 items-center rounded-sm border border-border bg-surface px-3.5 text-base font-medium text-fg no-underline hover:bg-surface-raised"
                 >
                   {q}

@@ -68,9 +68,19 @@ Full rules: [design/README.md](design/README.md).
 
 AI matching needs `ANTHROPIC_API_KEY` (see `.env.example`). Without it, the import still works with code matches only, and says so.
 
+## Ask your history (F4)
+
+`/review/ask` (or the ⌘K bar) answers questions about the active dataset:
+
+1. **The model plans, the browser computes.** `/api/ask` runs one Claude step at a time. When Claude calls an analysis tool (`src/lib/ask/tools.ts`: plateaus, lift trends, weekly sets, frequency, period comparisons), the browser runs it on local data and sends back only the result. The raw log never leaves the browser.
+2. **Answers are checked before they're shown.** Claude finishes with `show_answer`: charts that reference tool results, and short claims that cite the result behind them. `src/lib/ask/verify.ts` rejects any number that isn't in a tool result; Claude gets one chance to fix it, and anything still unsupported is marked *unverified* in the UI.
+3. **Every claim has its evidence.** Charts are drawn only from computed points. Tapping a claim outlines its dates on the chart and opens the rows behind it.
+
+Without `ANTHROPIC_API_KEY`, Ask says so and offers a **scripted example** on the sample data: the model's side is scripted, but the tools, number check, charts and evidence all run for real.
+
 ## Status
 
 - **Phase 0 (foundation):** tokens, app shell, seed data, placeholder routes.
-- **Phase 1 (Review):** history import with exercise-name cleanup is done. Next: Ask (F4).
+- **Phase 1 (Review):** history import with exercise-name cleanup (F5) and Ask with tools, charts and evidence (F4) are done. Next: Phase 2, the rule engine, program import (F1) and gym mode (F2).
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

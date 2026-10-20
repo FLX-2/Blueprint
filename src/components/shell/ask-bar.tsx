@@ -6,7 +6,8 @@ import { SearchIcon } from "@/components/icons";
 
 /**
  * The one input for questions, plan changes and navigation (⌘K / Ctrl+K).
- * For now it opens the Ask page; routing by intent arrives with the AI layer.
+ * For now every question goes to Ask; routing plan changes to Bend the week
+ * (F3) and navigation requests to pages comes later.
  */
 export function AskBar() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +30,9 @@ export function AskBar() {
       className="flex h-10 min-w-0 flex-[1_1_240px] items-center gap-2.5 rounded-md border border-border bg-bg px-3.5 text-muted focus-within:border-focus"
       onSubmit={(event) => {
         event.preventDefault();
-        router.push("/review/ask");
+        const q = inputRef.current?.value.trim() ?? "";
+        router.push(q ? `/review/ask?q=${encodeURIComponent(q)}` : "/review/ask");
+        if (inputRef.current) inputRef.current.value = "";
       }}
     >
       <SearchIcon width={16} height={16} />
