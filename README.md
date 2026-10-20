@@ -78,6 +78,18 @@ AI matching needs `ANTHROPIC_API_KEY` (see `.env.example`). Without it, the impo
 
 Without `ANTHROPIC_API_KEY`, Ask says so and offers a **scripted example** on the sample data: the model's side is scripted, but the tools, number check, charts and evidence all run for real.
 
+## Program import (F1)
+
+`/plan/import` turns a pasted program (a forum post, a PDF's text, a spreadsheet) into one the rule engine runs:
+
+1. **Read.** `/api/extract-program` asks Claude for the days, slots and progression rules, each with a confidence, a reason and an exact quote from the text. Nothing runs yet.
+2. **Check.** `src/lib/program/convert.ts` finds every quote in the source, validates each rule's parameters (a rule that doesn't add up is left out, never guessed), matches exercise names to the library, and flags what needs a human look: uncertain rules, either/or exercises, anything under 90% confidence.
+3. **Review.** Source on the left, structure on the right. Selecting an item outlines its quote; rules can be confirmed or edited. Approval stays blocked until every flag is resolved.
+4. **Start.** Code suggests starting weights from the lifter's log (about 90% of what it says they can do), and previews week 1 exactly as the engine will prescribe it.
+5. **Approve.** The program and its starting state are saved in this browser (IndexedDB); Plan and Train switch to it. "Use the sample program" switches back.
+
+Without an API key, import offers a scripted example of the GZCLP text: the AI's reading is scripted, and every step after it runs for real.
+
 ## Rule engine
 
 `src/lib/engine/` runs a program's progression rules. It's pure code with no AI: the AI only reads rules out of a pasted program (F1), and this is what runs them.
@@ -91,6 +103,6 @@ Without `ANTHROPIC_API_KEY`, Ask says so and offers a **scripted example** on th
 
 - **Phase 0 (foundation):** tokens, app shell, seed data, placeholder routes.
 - **Phase 1 (Review):** history import with exercise-name cleanup (F5) and Ask with tools, charts and evidence (F4) are done. 
-- **Phase 2 (Plan + Train):** the rule engine is done and drives Train's targets. Next: program import & review (F1), then gym mode logging (F2).
+- **Phase 2 (Plan + Train):** the rule engine and program import & review (F1) are done; Plan and Train run the active program. Next: gym mode logging (F2), so sessions feed the engine.
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

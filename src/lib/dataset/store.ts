@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { idbDelete, idbGet, idbPut, readFlag, writeFlag } from "@/lib/storage/idb";
 import { datasetFromImport, sampleDataset, type Dataset, type StoredImport } from "./dataset";
 
 /**
@@ -10,8 +11,6 @@ import { datasetFromImport, sampleDataset, type Dataset, type StoredImport } fro
  * sample data.
  */
 
-const DB_NAME = "blueprint";
-const STORE = "kv";
 const KEY = "import";
 const FLAG = "bp-dataset";
 
@@ -29,54 +28,15 @@ function emit(next: DatasetState) {
   listeners.forEach((l) => l());
 }
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
-  const db = await openDb();
-  try {
-    return await new Promise<T>((resolve, reject) => {
-      const req = fn(db.transaction(STORE, mode).objectStore(STORE));
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  } finally {
-    db.close();
-  }
-}
-
-function hasFlag() {
-  try {
-    return localStorage.getItem(FLAG) === "imported";
-  } catch {
-    return false;
-  }
-}
-
-function setFlag(on: boolean) {
-  try {
-    if (on) localStorage.setItem(FLAG, "imported");
-    else localStorage.removeItem(FLAG);
-  } catch {
-    // Storage blocked: the import still works for this page view.
-  }
-}
-
 function load() {
-  loading ??= run<StoredImport | undefined>("readonly", (s) => s.get(KEY))
+  loading ??= idbGet<StoredImport>(KEY)
     .then((stored) => emit(stored ? { status: "ready", dataset: datasetFromImport(stored) } : SAMPLE_STATE))
     .catch(() => emit(SAMPLE_STATE));
 }
 
 function getSnapshot(): DatasetState {
   if (state) return state;
-  if (!hasFlag()) return (state = SAMPLE_STATE);
+  if (!readFlag(FLAG)) return (state = SAMPLE_STATE);
   load();
   return LOADING_STATE;
 }
@@ -92,15 +52,15 @@ export function useDataset(): DatasetState {
 }
 
 export async function saveImport(stored: StoredImport) {
-  await run("readwrite", (s) => s.put(stored, KEY));
-  setFlag(true);
+  await idbPut(KEY, stored);
+  writeFlag(FLAG, true);
   loading = Promise.resolve();
   emit({ status: "ready", dataset: datasetFromImport(stored) });
 }
 
 export async function clearImport() {
-  await run("readwrite", (s) => s.delete(KEY));
-  setFlag(false);
+  await idbDelete(KEY);
+  writeFlag(FLAG, false);
   loading = null;
   emit(SAMPLE_STATE);
 }

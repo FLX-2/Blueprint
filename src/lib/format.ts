@@ -33,3 +33,9 @@ export function formatChange(ratio: number) {
   const percent = (ratio * 100).toFixed(1);
   return ratio >= 0 ? `+${percent}%` : `−${percent.slice(1)}%`;
 }
+
+/** "265 lb", or "BW" / "BW + 10 lb" for bodyweight lifts. */
+export function formatLoad(weight: number, bodyweight: boolean) {
+  if (!bodyweight) return `${weight} lb`;
+  return weight > 0 ? `BW + ${weight} lb` : "BW";
+}
