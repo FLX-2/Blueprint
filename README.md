@@ -58,6 +58,19 @@ Full rules: [design/README.md](design/README.md).
 
 `src/data/seed/history.ts` generates the same history on every build. It's built to tell one story, which the tests in `seed.test.ts` check: in August 2026 the athlete drops from four training days to three, weekly chest sets fall from about 14 to 8, and bench press stalls at 205 lb × 3–4 while squat keeps climbing.
 
+## History import (F5)
+
+`/review/data` imports a Strong, Hevy or custom-column CSV:
+
+1. **Read:** the file is parsed in the browser (`src/lib/import/`) and never uploaded. Warm-ups and cardio rows are left out and counted.
+2. **Clean up names:** code resolves what it can be certain about (`match.ts`: normalized names and aliases), suggests close spellings for review, and sends only the remaining *names* to Claude (`/api/match-exercises`), which returns a library match or a new exercise, each with a confidence and a reason. AI suggestions are marked in amber until confirmed; nothing imports until every name is confirmed.
+3. **Store:** sessions are saved to IndexedDB in this browser (`src/lib/dataset/store.ts`), and Review switches to them. Remove the import from `/review/data` to go back to the sample athlete.
+
+AI matching needs `ANTHROPIC_API_KEY` (see `.env.example`). Without it, the import still works with code matches only, and says so.
+
 ## Status
 
-Phase 0 (foundation) is done: tokens, app shell, seed data, placeholder routes. Next is Phase 1, Review: CSV import (F5), then Ask (F4). See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).
+- **Phase 0 (foundation):** tokens, app shell, seed data, placeholder routes.
+- **Phase 1 (Review):** history import with exercise-name cleanup is done. Next: Ask (F4).
+
+See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

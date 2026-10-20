@@ -43,7 +43,12 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="max-w-[720px]">
-        <CardHeader title="Demo data" meta={`${sessions.length} sessions`} />
+        <CardHeader title="Training data" meta={`Sample: ${sessions.length} sessions`} />
+        <Row label="Import from Strong, Hevy or a CSV">
+          <a href="/review/data" className={buttonClasses({ variant: "secondary", size: "sm" })}>
+            Import history
+          </a>
+        </Row>
         <Row label="Sample history as a Strong-style CSV">
           <a href="/demo/strong-export.csv" download className={buttonClasses({ variant: "secondary", size: "sm" })}>
             Download CSV
