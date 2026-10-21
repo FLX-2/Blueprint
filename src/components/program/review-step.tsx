@@ -96,7 +96,7 @@ function SlotRow({
               if (!v) return;
               onChange({ ...slot, exerciseId: v.startsWith("custom:") ? customId(v.slice(7)) : v, confirmed: true });
             }}
-            className="h-9 max-w-full rounded-sm border border-border bg-bg px-2 text-sm text-fg"
+            className="h-9 max-w-full rounded-sm border border-border-input bg-bg px-2 text-sm text-fg"
           >
             <option value="">{slot.alternatives.length ? "Pick one…" : "Which exercise?"}</option>
             <optgroup label="From the program">

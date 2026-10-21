@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ExtractReply } from "@/app/api/extract-program/route";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/text";
 import { athlete } from "@/data/seed";
 import { exerciseById, exercises } from "@/data/seed/exercises";
+import { StepHeading } from "@/components/ui/step-heading";
+import { restoreFocus, scrollBehavior } from "@/lib/a11y/focus";
 import { cn } from "@/lib/cn";
 import { useTrainingData } from "@/lib/dataset/training";
 import type { Exercise } from "@/lib/domain/types";
@@ -79,6 +81,7 @@ export function ImportProgram() {
   const [step, setStep] = useState<Step>("paste");
   const [text, setText] = useState("");
   const [reading, setReading] = useState(false);
+  const readRef = useRef<HTMLButtonElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [scripted, setScripted] = useState(false);
   const [draft, setDraft] = useState<ProgramDraft | null>(null);
@@ -111,12 +114,13 @@ export function ImportProgram() {
       else open(await matchUnresolved(draftFrom(reply.program, text, exercises)), false);
     } finally {
       setReading(false);
+      restoreFocus(readRef.current);
     }
   }
 
   function select(s: Selection) {
     setSelected(s);
-    if (s) document.getElementById(`item-${s.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (s) document.getElementById(`item-${s.id}`)?.scrollIntoView({ block: "center", behavior: scrollBehavior() });
   }
 
   function toWeights() {
@@ -160,6 +164,7 @@ export function ImportProgram() {
           </li>
         ))}
       </ol>
+      <StepHeading key={step} index={current} total={STEPS.length} label={STEPS[current].label} />
 
       {scripted && step !== "paste" ? (
         <p className="m-0 rounded-md border border-border bg-surface px-4 py-3 text-base text-fg-secondary">
@@ -188,7 +193,7 @@ export function ImportProgram() {
                 onChange={(e) => setText(e.target.value)}
                 rows={12}
                 placeholder="Paste the program: days, exercises, sets and reps, and how to progress…"
-                className="min-h-64 resize-y rounded-md border border-border bg-bg p-4 font-display text-lg leading-[1.6] text-fg placeholder:text-muted focus:border-focus focus:outline-none"
+                className="min-h-64 resize-y rounded-md border border-border-input bg-bg p-4 font-display text-lg leading-[1.6] text-fg placeholder:text-muted focus:border-focus"
               />
             </label>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -197,7 +202,7 @@ export function ImportProgram() {
                 <Button variant="secondary" onClick={() => setText(EXAMPLE_PROGRAM_TEXT)} disabled={reading}>
                   Use an example
                 </Button>
-                <Button variant="primary" onClick={read} disabled={reading || text.trim().length < 20}>
+                <Button ref={readRef} variant="primary" onClick={read} disabled={reading || text.trim().length < 20}>
                   {reading ? "Reading…" : "Read program"}
                 </Button>
               </div>

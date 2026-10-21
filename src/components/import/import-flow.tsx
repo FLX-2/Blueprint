@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { exerciseById, exercises } from "@/data/seed/exercises";
+import { StepHeading } from "@/components/ui/step-heading";
 import { cn } from "@/lib/cn";
 import { clearImport, saveImport, useDataset } from "@/lib/dataset/store";
 import type { Unit } from "@/lib/domain/types";
@@ -32,8 +33,10 @@ const LIBRARY_SORTED = [...exercises].sort((a, b) => a.name.localeCompare(b.name
 
 type Loaded = { fileName: string; header: string[]; body: string[][]; detected: DetectedFormat };
 
+const stepIndex = (step: Step) => STEPS.findIndex((s) => s.id === (step === "map" ? "preview" : step));
+
 function Stepper({ step }: { step: Step }) {
-  const current = STEPS.findIndex((s) => s.id === (step === "map" ? "preview" : step));
+  const current = stepIndex(step);
   return (
     <ol className="m-0 flex list-none flex-wrap gap-x-6 gap-y-2 p-0 font-mono text-xs tracking-[0.06em] uppercase">
       {STEPS.map((s, i) => (
@@ -160,6 +163,7 @@ export function ImportFlow() {
         meta={loaded ? loaded.fileName : "Strong, Hevy or any CSV export"}
       />
       <Stepper step={step} />
+      <StepHeading key={step} index={stepIndex(step)} total={STEPS.length} label={STEPS[stepIndex(step)].label} />
 
       {current && step === "choose" ? (
         <Card className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">

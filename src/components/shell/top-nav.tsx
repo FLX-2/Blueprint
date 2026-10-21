@@ -18,10 +18,10 @@ export function TopNav() {
         <AskBar />
         <Link
           href="/settings"
-          aria-label="Settings and account"
           className="flex size-9 items-center justify-center rounded-full border border-border bg-surface-raised text-sm font-semibold text-fg no-underline"
         >
           {athlete.initials}
+          <span className="sr-only">, settings and account</span>
         </Link>
       </div>
     </header>

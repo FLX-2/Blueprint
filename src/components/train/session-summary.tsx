@@ -25,18 +25,28 @@ export function SessionSummary() {
   const progress = useProgress(active);
 
   if (!active || progress.status !== "ready") {
-    return <div className="gym flex min-h-dvh items-center justify-center font-mono text-sm text-gym-muted">Loading…</div>;
+    return (
+      <main className="gym flex min-h-dvh items-center justify-center font-mono text-sm text-gym-muted">
+        <p role="status">Loading…</p>
+      </main>
+    );
   }
 
   const summary = progress.value.lastSummary;
   if (!summary) {
     return (
-      <div className="gym flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="m-0 font-display text-3xl">No session logged yet.</p>
-        <Link href="/train/session" className="font-medium text-gym-text">
-          Start one
-        </Link>
-      </div>
+      <main className="gym flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
+        <h1 className="m-0 font-display text-3xl font-normal">No session logged yet.</h1>
+        <p className="m-0 text-base text-gym-muted">Your summary shows up here after you finish one in gym mode.</p>
+        <span className="flex gap-6">
+          <Link href="/train/session" className="font-medium text-gym-text">
+            Start a session
+          </Link>
+          <Link href="/train" className="font-medium text-gym-muted">
+            Back to Train
+          </Link>
+        </span>
+      </main>
     );
   }
 

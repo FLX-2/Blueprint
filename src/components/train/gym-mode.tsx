@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOffline } from "next/offline";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeftIcon } from "@/components/icons";
 import { applyChanges, explainAdjusted } from "@/lib/adapt/changes";
 import { athlete } from "@/data/seed";
+import { useFocusWhenLost } from "@/lib/a11y/focus";
 import { cn } from "@/lib/cn";
 import { useTrainingData } from "@/lib/dataset/training";
 import type { Exercise } from "@/lib/domain/types";
@@ -57,7 +58,9 @@ function Stepper({ label, value, onChange, step, min, format }: { label: string;
       </button>
       <span className="flex flex-col items-center">
         <span className="font-mono text-[11px] tracking-[0.08em] text-gym-muted uppercase">{label}</span>
-        <span className="num text-xl font-medium">{format(value)}</span>
+        <output aria-live="polite" className="num text-xl font-medium">
+          {format(value)}
+        </output>
       </span>
       <button type="button" aria-label={`More ${label}`} onClick={() => onChange(value + step)} className="flex size-12 items-center justify-center rounded-lg text-2xl text-gym-text hover:bg-gym-track">
         +
@@ -77,6 +80,8 @@ function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exerci
   const changed = weight !== set.weight || reps !== set.targetReps;
   // A swapped-in lift with no history has no weight yet: the lifter picks one.
   const needsWeight = !bodyweight && weight === 0;
+  // Logging a set swaps in the next set's panel; keep focus on Log.
+  const logRef = useFocusWhenLost<HTMLButtonElement>();
 
   return (
     <div className="flex flex-col gap-4">
@@ -100,6 +105,7 @@ function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exerci
       </div>
 
       <button
+        ref={logRef}
         type="button"
         onClick={() => onLog(weight, reps)}
         disabled={needsWeight}
@@ -119,7 +125,17 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
   const log = logStore.useValue();
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Read out by screen readers: what was logged, and when rest is over.
+  const [announcement, setAnnouncement] = useState("");
+  const endRef = useRef<HTMLButtonElement>(null);
+  const wasConfirming = useRef(false);
   useWakeLock(true);
+
+  // Back on End once the dialog closes (after the page behind it stops being inert).
+  useEffect(() => {
+    if (wasConfirming.current && !confirming) endRef.current?.focus();
+    wasConfirming.current = confirming;
+  }, [confirming]);
 
   const day = active.program.days.find((d) => d.id === session.dayId)!;
   const slot = session.slots[session.cursor.slot];
@@ -134,7 +150,10 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
     if (!session.restUntil) return;
     const left = session.restUntil - Date.now();
     if (left <= 0) return;
-    const id = setTimeout(() => navigator.vibrate?.([200, 100, 200]), left);
+    const id = setTimeout(() => {
+      navigator.vibrate?.([200, 100, 200]);
+      setAnnouncement("Rest over.");
+    }, left);
     return () => clearTimeout(id);
   }, [session.restUntil]);
 
@@ -175,8 +194,17 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
 
   return (
     <div className="gym flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between gap-2 px-2 py-2">
-        <button type="button" onClick={() => setConfirming(true)} className="flex h-11 items-center gap-1 px-2 font-medium text-gym-text">
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
+      <header inert={confirming} className="flex items-center justify-between gap-2 px-2 py-2">
+        <button
+          ref={endRef}
+          type="button"
+          onClick={() => setConfirming(true)}
+          aria-haspopup="dialog"
+          className="flex h-11 items-center gap-1 px-2 font-medium text-gym-text"
+        >
           <ChevronLeftIcon width={20} height={20} />
           End
         </button>
@@ -186,7 +214,7 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
         <span className="w-16 text-right font-mono text-[11px] text-gym-muted">{offline ? "Offline · saved" : `${done}/${total}`}</span>
       </header>
 
-      <nav aria-label="Exercises" className="flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
+      <nav inert={confirming} aria-label="Exercises" className="flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
         {session.slots.map((s, i) => {
           const n = s.sets.filter((x) => x.done).length;
           return (
@@ -210,10 +238,10 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
         })}
       </nav>
 
-      <main className="mx-auto flex w-full max-w-[440px] flex-1 flex-col gap-4 px-6 pt-4 pb-8">
+      <main inert={confirming} className="mx-auto flex w-full max-w-[440px] flex-1 flex-col gap-4 px-6 pt-4 pb-8">
         {complete ? (
           <div className="flex flex-1 flex-col justify-center gap-4">
-            <p className="m-0 font-display text-5xl font-medium">All sets done.</p>
+            <h1 className="m-0 font-display text-5xl font-medium">All sets done.</h1>
             <p className="m-0 text-md text-gym-muted">Finish to save the session and let the rules set your next targets.</p>
             <button type="button" onClick={finish} disabled={saving} className="h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg disabled:opacity-60">
               {saving ? "Saving…" : "Finish session"}
@@ -224,10 +252,10 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
           </div>
         ) : (
           <>
-            <div className="flex justify-between font-mono text-xs tracking-[0.06em] text-gym-muted">
-              <span>
-                {exercise.name.toUpperCase()} · {slot.tier} · {slot.scheme}
-              </span>
+            <div className="flex justify-between font-mono text-xs tracking-[0.06em] text-gym-muted uppercase">
+              <h1 className="m-0 text-xs font-normal">
+                {exercise.name} · {slot.tier} · {slot.scheme}
+              </h1>
               <span>
                 SET {session.cursor.set + 1}/{slot.sets.length}
               </span>
@@ -259,7 +287,11 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
               key={`${session.cursor.slot}-${session.cursor.set}`}
               session={session}
               exercise={exercise}
-              onLog={(weight, reps) => save(logSet(session, { weight, reps }, Date.now()))}
+              onLog={(weight, reps) => {
+                const next = logSet(session, { weight, reps }, Date.now());
+                save(next);
+                setAnnouncement(logAnnouncement(session, next, weight, reps, exercise, (id) => active.exercises.get(id)?.name ?? id));
+              }}
             />
             {done ? (
               <button type="button" onClick={() => save(undoLast(session))} className="h-11 self-center text-sm text-gym-muted underline-offset-4 hover:underline">
@@ -271,16 +303,19 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
       </main>
 
       {confirming ? (
-        <div role="dialog" aria-modal="true" aria-label="End session" className="fixed inset-0 z-30 flex items-end bg-black/60 sm:items-center sm:justify-center">
-          <div className="flex w-full flex-col gap-3 rounded-t-2xl border border-gym-track bg-gym-bg p-6 sm:max-w-[420px] sm:rounded-2xl">
-            <p className="m-0 font-display text-3xl font-medium">End this session?</p>
+        <EndDialog onClose={() => setConfirming(false)}>
             <p className="m-0 text-base text-gym-muted">
               {done} of {total} sets logged. Finishing saves them and runs the rules; exercises with nothing logged keep their targets.
             </p>
             <button type="button" onClick={finish} disabled={saving || !done} className="h-14 rounded-xl bg-accent text-md font-semibold text-accent-fg disabled:opacity-50">
               {saving ? "Saving…" : "Finish now"}
             </button>
-            <button type="button" onClick={() => setConfirming(false)} className="h-12 rounded-xl border border-gym-track text-md">
+            <button
+              type="button"
+              data-autofocus
+              onClick={() => setConfirming(false)}
+              className="h-12 rounded-xl border border-gym-track text-md"
+            >
               Keep going
             </button>
             <button
@@ -293,14 +328,49 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
             >
               Discard session
             </button>
-          </div>
-        </div>
+        </EndDialog>
       ) : null}
     </div>
   );
 }
 
 /** Gym mode: always dark, phone-first, and fully on-device. */
+/** What a screen reader hears after a set: what was logged and what's next. */
+function logAnnouncement(before: ActiveSession, after: ActiveSession, weight: number, reps: number, exercise: Exercise, nameOf: (id: string) => string) {
+  const logged = `Logged ${reps} reps${weight ? ` at ${formatLoad(weight, exercise.equipment === "bodyweight")}` : ""}.`;
+  if (isComplete(after)) return `${logged} All sets done.`;
+  const rest = after.restUntil ? ` Rest ${mmss(after.restUntil - Date.now())}.` : "";
+  const slot = after.slots[after.cursor.slot];
+  const next = after.cursor.slot === before.cursor.slot ? `Next: set ${after.cursor.set + 1} of ${slot.sets.length}.` : `Next: ${nameOf(slot.exerciseId)}.`;
+  return `${logged}${rest} ${next}`;
+}
+
+/** The end-session sheet: focus starts on "Keep going", Escape closes it. */
+function EndDialog({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+  }, []);
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="end-session-title"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+      className="fixed inset-0 z-30 flex items-end bg-black/60 sm:items-center sm:justify-center"
+    >
+      <div ref={ref} className="flex w-full flex-col gap-3 rounded-t-2xl border border-gym-track bg-gym-bg p-6 sm:max-w-[420px] sm:rounded-2xl">
+        <h2 id="end-session-title" className="m-0 font-display text-3xl font-medium">
+          End this session?
+        </h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function GymMode() {
   const program = useActiveProgram();
   const session = activeSessionStore.useValue();
@@ -308,7 +378,11 @@ export function GymMode() {
   const progress = useProgress(active);
 
   if (!active || progress.status !== "ready" || session.status !== "ready") {
-    return <div className="gym flex min-h-dvh items-center justify-center font-mono text-sm text-gym-muted">Loading…</div>;
+    return (
+      <main className="gym flex min-h-dvh items-center justify-center font-mono text-sm text-gym-muted">
+        <p role="status">Loading…</p>
+      </main>
+    );
   }
 
   const current = session.value;

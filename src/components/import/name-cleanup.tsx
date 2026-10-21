@@ -87,7 +87,7 @@ function GroupCard({
               value={group.target.kind === "library" ? `lib:${group.target.id}` : "new"}
               onChange={(e) => setTarget(e.target.value)}
               disabled={checking || props.importing}
-              className="h-9 max-w-56 rounded-sm border border-border bg-bg px-2 text-sm text-fg"
+              className="h-9 max-w-56 rounded-sm border border-border-input bg-bg px-2 text-sm text-fg"
             >
               <option value="new">{group.target.kind === "new" ? `New: ${group.target.name}` : "New exercise"}</option>
               <optgroup label="Library">

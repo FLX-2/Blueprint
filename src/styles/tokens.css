@@ -79,6 +79,7 @@
   --bp-surface-raised: #232421;
   --bp-border: #30312D;
   --bp-border-strong: #ECEBE5;
+  --bp-border-input: #706F68;
   --bp-text: #ECEBE5;
   --bp-text-secondary: #C9C8C0;
   --bp-text-muted: #A3A29A;
@@ -113,6 +114,7 @@
   --bp-surface-raised: #F0EFEA;
   --bp-border: #DEDDD6;
   --bp-border-strong: #1B1B19;
+  --bp-border-input: #8A8982;
   --bp-text: #1B1B19;
   --bp-text-secondary: #45443F;
   --bp-text-muted: #6B6A64;
@@ -148,6 +150,8 @@
     --bp-surface-raised: #F0EFEA;
     --bp-border: #DEDDD6;
     --bp-border-strong: #1B1B19;
+    --bp-border-input: #8A8982;
+  --bp-border-input: #8A8982;
     --bp-text: #1B1B19;
     --bp-text-secondary: #45443F;
     --bp-text-muted: #6B6A64;
@@ -200,6 +204,7 @@
   --color-surface-raised: var(--bp-surface-raised);
   --color-border: var(--bp-border);
   --color-border-strong: var(--bp-border-strong);
+  --color-border-input: var(--bp-border-input);
   --color-fg: var(--bp-text);
   --color-fg-secondary: var(--bp-text-secondary);
   --color-muted: var(--bp-text-muted);
@@ -269,6 +274,22 @@ body {
 :focus-visible {
   outline: var(--bp-border-focus) solid var(--bp-focus);
   outline-offset: 2px;
+}
+
+/* Headings and regions focused by script (after a step changes) don't need a ring. */
+[tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Every number in the app: tabular so columns and timers don't jitter. */

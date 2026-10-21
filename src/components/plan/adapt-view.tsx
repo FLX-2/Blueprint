@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import {
 } from "@/lib/adapt/changes";
 import { EXAMPLE_CONSTRAINT, EXAMPLE_GYM_ID, EXAMPLE_PROPOSALS, EXAMPLE_SUMMARY } from "@/lib/adapt/example";
 import type { AdaptReply, AdaptRequest } from "@/lib/adapt/schema";
+import { restoreFocus, useFocusWhenLost } from "@/lib/a11y/focus";
 import { cn } from "@/lib/cn";
 import { useTrainingData } from "@/lib/dataset/training";
 import type { Exercise, GymProfile } from "@/lib/domain/types";
@@ -73,6 +74,8 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
   const [error, setError] = useState<string | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [decisions, setDecisions] = useState<Record<number, Decision>>({});
+  const constraintRef = useRef<HTMLTextAreaElement>(null);
+  const proposeRef = useRef<HTMLButtonElement>(null);
 
   const { program, exercises } = active;
   const nextDay = program.days[progress.dayIndex % program.days.length];
@@ -130,6 +133,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
       setError("Couldn’t reach the server. Bending the week needs a connection; your plan is unchanged.");
     } finally {
       setBusy(false);
+      restoreFocus(proposeRef.current);
     }
   }
 
@@ -185,7 +189,13 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
                 {acceptedCount} of {proposal.accepted.length} accepted{undecided ? ` · ${undecided} still to decide` : ""}. The program and its rules don’t change.
               </span>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => setProposal(null)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setProposal(null);
+                    requestAnimationFrame(() => constraintRef.current?.focus());
+                  }}
+                >
                   Start over
                 </Button>
                 <Button variant="primary" onClick={apply} disabled={!acceptedCount}>
@@ -212,11 +222,12 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
             <label className="flex flex-col gap-2">
               <Eyebrow>What changed?</Eyebrow>
               <textarea
+                ref={constraintRef}
                 value={constraint}
                 onChange={(e) => setConstraint(e.target.value)}
                 rows={3}
                 placeholder="Traveling, a different gym, less time, feeling run down…"
-                className="min-h-28 resize-y rounded-md border border-border bg-bg p-4 font-display text-lg leading-[1.6] text-fg placeholder:text-muted focus:border-focus focus:outline-none"
+                className="min-h-28 resize-y rounded-md border border-border-input bg-bg p-4 font-display text-lg leading-[1.6] text-fg placeholder:text-muted focus:border-focus"
               />
             </label>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Common reasons">
@@ -240,7 +251,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
                 <select
                   value={gymId}
                   onChange={(e) => setGymId(e.target.value)}
-                  className="h-11 rounded-md border border-border bg-bg px-3 text-base text-fg focus:border-focus focus:outline-none"
+                  className="h-11 rounded-md border border-border-input bg-bg px-3 text-base text-fg focus:border-focus"
                 >
                   <option value="">Your usual gym</option>
                   {gyms
@@ -258,7 +269,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
                 <select
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
-                  className="h-11 rounded-md border border-border bg-bg px-3 text-base text-fg focus:border-focus focus:outline-none"
+                  className="h-11 rounded-md border border-border-input bg-bg px-3 text-base text-fg focus:border-focus"
                 >
                   {Array.from({ length: Math.max(4, program.days.length) }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>
@@ -282,9 +293,12 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
                     Use the example
                   </Button>
                 ) : null}
-                <Button variant="ai" onClick={propose} disabled={busy || constraint.trim().length < 3}>
+                <Button ref={proposeRef} variant="ai" onClick={propose} disabled={busy || constraint.trim().length < 3}>
                   {busy ? "Working it out…" : "Propose changes"}
                 </Button>
+                <span role="status" className="sr-only">
+                  {busy ? "Working out changes for the coming sessions…" : ""}
+                </span>
               </div>
             </div>
           </Card>
@@ -312,6 +326,7 @@ function ProposalView({
   const chosen = proposal.accepted.filter((_, i) => decisions[i] !== "declined");
   const effects = effectsOf(proposal.upcoming, chosen, exercises);
   const nameOf = (id: string) => exercises.get(id)?.name ?? id;
+  const headingRef = useFocusWhenLost<HTMLHeadingElement>();
 
   return (
     <>
@@ -331,7 +346,9 @@ function ProposalView({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div className="flex flex-col gap-6">
           <Card className="ai-proposal flex flex-col gap-2 p-5">
-            <Eyebrow className="text-ai-text">The AI’s proposal{proposal.gym ? ` · ${proposal.gym.name}` : ""}</Eyebrow>
+            <h2 ref={headingRef} tabIndex={-1} className="m-0">
+              <Eyebrow className="text-ai-text">The AI’s proposal{proposal.gym ? ` · ${proposal.gym.name}` : ""}</Eyebrow>
+            </h2>
             <Reasoning className="text-lg">{proposal.summary}</Reasoning>
             {proposal.accepted.length ? (
               <div>

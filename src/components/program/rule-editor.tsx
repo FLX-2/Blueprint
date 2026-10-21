@@ -26,7 +26,7 @@ function Num({ label, value, onChange, suffix }: { label: string; value: string;
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="num h-10 w-24 rounded-sm border border-border bg-bg px-3 text-base text-fg"
+          className="num h-10 w-24 rounded-sm border border-border-input bg-bg px-3 text-base text-fg"
         />
         {suffix ? <span className="font-mono text-sm text-muted">{suffix}</span> : null}
       </span>
@@ -94,17 +94,17 @@ export function RuleEditor({ rule, onSave, onCancel }: { rule: Rule; onSave: (ru
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm font-medium">
             Stages, in order
-            <input value={stages} onChange={(e) => setStages(e.target.value)} className="num h-10 rounded-sm border border-border bg-bg px-3 text-base text-fg" />
+            <input value={stages} onChange={(e) => setStages(e.target.value)} className="num h-10 rounded-sm border border-border-input bg-bg px-3 text-base text-fg" />
           </label>
           <div className="flex flex-wrap items-end gap-4">
             <label className="flex flex-col gap-1 text-sm font-medium">
               Then restart with
-              <input value={resetTo} onChange={(e) => setResetTo(e.target.value)} className="num h-10 w-28 rounded-sm border border-border bg-bg px-3 text-base text-fg" />
+              <input value={resetTo} onChange={(e) => setResetTo(e.target.value)} className="num h-10 w-28 rounded-sm border border-border-input bg-bg px-3 text-base text-fg" />
             </label>
             <Num label="at" value={percent} onChange={setPercent} suffix="%" />
             <label className="flex flex-col gap-1 text-sm font-medium">
               of
-              <select value={percentOf} onChange={(e) => setPercentOf(e.target.value as typeof percentOf)} className="h-10 rounded-sm border border-border bg-bg px-2 text-base text-fg">
+              <select value={percentOf} onChange={(e) => setPercentOf(e.target.value as typeof percentOf)} className="h-10 rounded-sm border border-border-input bg-bg px-2 text-base text-fg">
                 <option value="last-weight">the last weight</option>
                 <option value="retest-5rm">a retested 5RM</option>
               </select>

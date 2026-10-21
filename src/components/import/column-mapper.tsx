@@ -43,7 +43,7 @@ export function ColumnMapper({
               <select
                 value={map[field.key] ?? ""}
                 onChange={(e) => onChange({ ...map, [field.key]: e.target.value === "" ? undefined : Number(e.target.value) })}
-                className="h-11 rounded-sm border border-border bg-bg px-3 text-base text-fg"
+                className="h-11 rounded-sm border border-border-input bg-bg px-3 text-base text-fg"
               >
                 <option value="">{field.required ? "Choose a column" : "None"}</option>
                 {header.map((h, i) => (

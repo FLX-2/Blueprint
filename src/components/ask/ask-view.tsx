@@ -64,11 +64,11 @@ function StepList({ steps, running }: { steps: Step[]; running: boolean }) {
         {steps.map((s) => (
           <li key={s.id} className="grid grid-cols-[20px_1fr] items-baseline gap-2.5 font-mono text-sm text-fg-secondary">
             {s.ok ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bp-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Done">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bp-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="Done">
                 <path d="M5 12l5 5 9-10" />
               </svg>
             ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bp-danger)" strokeWidth="2.5" strokeLinecap="round" aria-label="Failed">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bp-danger)" strokeWidth="2.5" strokeLinecap="round" role="img" aria-label="Failed">
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             )}
@@ -193,6 +193,9 @@ export function AskView() {
             ) : null}
 
             <StepList steps={turn.steps} running={turn.state.status === "running"} />
+            <p role="status" className="sr-only">
+              {turn.state.status === "running" ? "Working out the answer…" : turn.state.status === "answered" || turn.state.status === "text" ? "Answer ready." : ""}
+            </p>
 
             {turn.state.status === "error" ? (
               <ErrorCard
@@ -241,7 +244,7 @@ export function AskView() {
               e.preventDefault();
               submit(draft);
             }}
-            className="flex h-12 items-center gap-2 rounded-md border border-border bg-surface pr-2 pl-4 focus-within:border-focus"
+            className="flex h-12 items-center gap-2 rounded-md border border-border-input bg-surface pr-2 pl-4 focus-within:border-focus focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
           >
             <input
               value={draft}
@@ -263,7 +266,7 @@ export function AskView() {
               e.preventDefault();
               submit(draft);
             }}
-            className="flex h-12 items-center gap-2 rounded-md border border-border bg-surface pr-2 pl-4 focus-within:border-focus"
+            className="flex h-12 items-center gap-2 rounded-md border border-border-input bg-surface pr-2 pl-4 focus-within:border-focus focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
           >
             <input
               value={draft}

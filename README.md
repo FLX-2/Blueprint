@@ -112,6 +112,17 @@ Without an API key, import offers a scripted example of the GZCLP text: the AI's
 - **Ask bar routing.** `routeIntent()` sends plan changes to Bend the week and everything else to Ask, with plain matching so it's instant and predictable.
 - **No key?** With the sample program, "Use the example" runs a scripted proposal for the hotel-gym trip. Only the model's side is scripted; the checks, weights and effects run for real.
 
+## Accessibility
+
+Checked with axe-core (WCAG 2.2 AA plus best practices) on every screen and its main in-page states, in dark and light themes at desktop and phone widths, and with a scripted keyboard walkthrough.
+
+- **Contrast.** All text tokens pass AA in both themes. Form fields use `border-input`, which is 3:1 against the page and cards.
+- **Keyboard.** A skip link comes first. Focus rings are always visible. When a step replaces the control you used (Propose, Read, Log set, the next import step), focus moves to the new content (`useFocusWhenLost`), or back to the button if the request fails.
+- **Gym mode.** Each screen has a heading. Logging a set announces what was logged and what's next; the end of rest is announced too, along with the buzz. Focus stays on Log between sets. The end-session sheet is a real dialog: focus starts on "Keep going", Escape closes it, and the page behind it is inert.
+- **Screen readers.** Live regions cover AI work in progress ("Working out the answer…") and finished answers. Steppers announce their value, charts have text alternatives, and the avatar link names itself.
+- **Motion.** `prefers-reduced-motion` turns off transitions, animations and smooth scrolling.
+- **Errors.** Error pages for the app shell and gym mode say that saved data is untouched and offer Try again; there's also a 404 page.
+
 ## Rule engine
 
 `src/lib/engine/` runs a program's progression rules. It's pure code with no AI: the AI only reads rules out of a pasted program (F1), and this is what runs them.
@@ -127,6 +138,6 @@ Without an API key, import offers a scripted example of the GZCLP text: the AI's
 - **Phase 1 (Review):** history import with exercise-name cleanup (F5) and Ask with tools, charts and evidence (F4) are done. 
 - **Phase 2 (Plan + Train):** the rule engine, program import & review (F1) and gym mode logging (F2) are done. Sessions logged offline feed the engine, Review and Ask.
 - **Phase 3 (Adapt):** Bend the week (F3) and Ask bar routing for plan changes are done.
-- **Next:** a polish and accessibility pass.
+- **Polish and accessibility:** axe-clean in both themes at both widths, with keyboard and screen reader fixes, error pages and a 404 page.
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

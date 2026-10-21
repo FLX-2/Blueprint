@@ -59,7 +59,7 @@ export function WeightsStep({
                   value={values[input.key] ?? ""}
                   onChange={(e) => onChange({ ...values, [input.key]: e.target.value })}
                   aria-label={`${input.field === "trainingMax" ? "Training max" : "Starting weight"} for ${input.tier} ${exercises.get(input.exerciseId)?.name}`}
-                  className="num h-11 w-24 rounded-sm border border-border bg-bg px-3 text-right text-md text-fg"
+                  className="num h-11 w-24 rounded-sm border border-border-input bg-bg px-3 text-right text-md text-fg"
                 />
                 <span className="font-mono">lb</span>
               </label>
