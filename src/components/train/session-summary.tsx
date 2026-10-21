@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { athlete } from "@/data/seed";
+import { applyChanges } from "@/lib/adapt/changes";
 import { cn } from "@/lib/cn";
 import { prescribe, type EventKind } from "@/lib/engine/engine";
 import { formatLoad, formatLongDate } from "@/lib/format";
 import { useActiveProgram } from "@/lib/program/store";
-import { useProgress } from "@/lib/train/store";
+import { adjustmentFor, useProgress } from "@/lib/train/store";
 
 const KIND_LABEL: Record<EventKind, string> = {
   progressed: "Up",
@@ -42,7 +43,10 @@ export function SessionSummary() {
   const nameOf = (id: string) => active.exercises.get(id)?.name ?? id;
   const exerciseOf = (key: string) => key.slice(key.indexOf(":") + 1);
   const next = active.program.days[progress.value.dayIndex % active.program.days.length];
-  const nextTargets = prescribe(active.program, next, progress.value.state, athlete);
+  // Next time's targets, with any Bend the week changes for that day.
+  const nextTargets = applyChanges(prescribe(active.program, next, progress.value.state, athlete), adjustmentFor(progress.value, next.id)?.changes ?? []).filter(
+    (p) => p.change?.kind !== "skip",
+  );
 
   return (
     <div className="gym min-h-dvh">
@@ -101,7 +105,7 @@ export function SessionSummary() {
                       e.kind === "progressed" || e.kind === "cycle" ? "bg-accent text-accent-fg" : "border border-gym-track text-gym-muted",
                     )}
                   >
-                    {KIND_LABEL[e.kind]}
+                    {e.swapped ? "Swapped" : KIND_LABEL[e.kind]}
                   </span>
                 </span>
                 <span className="text-base text-gym-muted">{e.message}</span>
@@ -120,8 +124,11 @@ export function SessionSummary() {
               <p key={p.key} className="m-0 flex justify-between gap-3 text-base">
                 <span>
                   {exercise?.name} <span className="font-mono text-sm text-gym-muted">{p.scheme}</span>
+                  {p.change ? <span className="font-mono text-xs text-gym-muted"> adjusted</span> : null}
                 </span>
-                <span className="num">{top ? formatLoad(top.weight, exercise?.equipment === "bodyweight") : "—"}</span>
+                <span className="num">
+                  {top && (top.weight > 0 || exercise?.equipment === "bodyweight") ? formatLoad(top.weight, exercise?.equipment === "bodyweight") : "—"}
+                </span>
               </p>
             );
           })}

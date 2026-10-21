@@ -34,14 +34,24 @@ export type ActiveSession = {
   cursor: { slot: number; set: number };
   /** Epoch ms when the current rest ends, or null when not resting. */
   restUntil: number | null;
+  /** The Bend-the-week adjustment this session follows, if any. */
+  adjustmentId?: string;
 };
 
 /** Default rest by tier, in seconds: heavy work gets longer. */
 export const REST_SECONDS: Record<Tier, number> = { T1: 180, T2: 120, T3: 75 };
 
-export function startSession(opts: { id: string; programId: string; day: ProgramDay; prescriptions: Prescription[]; now: Date }): ActiveSession {
+export function startSession(opts: {
+  id: string;
+  programId: string;
+  day: ProgramDay;
+  prescriptions: Prescription[];
+  now: Date;
+  adjustmentId?: string;
+}): ActiveSession {
   return {
     id: opts.id,
+    ...(opts.adjustmentId ? { adjustmentId: opts.adjustmentId } : {}),
     programId: opts.programId,
     dayId: opts.day.id,
     startedAt: opts.now.toISOString(),
@@ -159,7 +169,8 @@ export type SessionSummary = {
   setsPlanned: number;
   /** Total weight moved, lb. */
   volume: number;
-  events: RuleEvent[];
+  /** `swapped`: the lift was swapped on purpose (Bend the week), so it held. */
+  events: Array<RuleEvent & { swapped?: boolean }>;
   bests: PersonalBest[];
 };
 

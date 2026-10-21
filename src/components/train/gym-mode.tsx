@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useOffline } from "next/offline";
 import { useEffect, useState } from "react";
 import { ChevronLeftIcon } from "@/components/icons";
+import { applyChanges, explainAdjusted } from "@/lib/adapt/changes";
 import { athlete } from "@/data/seed";
 import { cn } from "@/lib/cn";
 import { useTrainingData } from "@/lib/dataset/training";
@@ -14,7 +15,7 @@ import { platesFor } from "@/lib/engine/plates";
 import { formatLoad } from "@/lib/format";
 import { useActiveProgram, type ActiveProgram } from "@/lib/program/store";
 import { finishSession, isComplete, logSet, moveTo, startSession, undoLast, type ActiveSession } from "@/lib/train/session";
-import { activeSessionStore, localDate, logStore, progressStore, useProgress, type Progress } from "@/lib/train/store";
+import { activeSessionStore, adjustmentFor, localDate, logStore, progressStore, useProgress, type Progress } from "@/lib/train/store";
 
 /** Re-renders every `ms` while mounted (for timers). */
 function useNow(ms = 1000) {
@@ -74,12 +75,18 @@ function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exerci
   const bodyweight = exercise.equipment === "bodyweight";
   const plates = exercise.equipment === "barbell" ? platesFor(weight, athlete.barWeight) : null;
   const changed = weight !== set.weight || reps !== set.targetReps;
+  // A swapped-in lift with no history has no weight yet: the lifter picks one.
+  const needsWeight = !bodyweight && weight === 0;
 
   return (
     <div className="flex flex-col gap-4">
       <p className="m-0 mt-2 flex items-baseline gap-2">
-        <span className="font-display text-gym font-medium tracking-[-0.03em]">{bodyweight && weight === 0 ? "BW" : weight}</span>
-        {bodyweight && weight === 0 ? null : <span className="font-mono text-md text-gym-muted">{bodyweight ? "lb added" : "lb"}</span>}
+        <span className="font-display text-gym font-medium tracking-[-0.03em]">{needsWeight ? "—" : bodyweight && weight === 0 ? "BW" : weight}</span>
+        {needsWeight ? (
+          <span className="font-mono text-md text-gym-muted">pick a weight</span>
+        ) : bodyweight && weight === 0 ? null : (
+          <span className="font-mono text-md text-gym-muted">{bodyweight ? "lb added" : "lb"}</span>
+        )}
       </p>
       <p className="m-0 font-mono text-2xl font-medium">
         × {set.targetReps}
@@ -95,9 +102,10 @@ function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exerci
       <button
         type="button"
         onClick={() => onLog(weight, reps)}
-        className="h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg active:brightness-95"
+        disabled={needsWeight}
+        className="h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg active:brightness-95 disabled:opacity-50"
       >
-        {changed ? `Log ${reps} × ${formatLoad(weight, bodyweight)}` : `Log set · ${reps} reps`}
+        {needsWeight ? "Set the weight first" : changed ? `Log ${reps} × ${formatLoad(weight, bodyweight)}` : `Log set · ${reps} reps`}
       </button>
     </div>
   );
@@ -146,15 +154,20 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
       date: localDate(at),
       now: at,
     });
+    const adjustment = progress.adjustments?.find((a) => a.id === session.adjustmentId);
+    const slotExercise = (key: string) => day.slots.find((s) => `${s.tier}:${s.exerciseId}` === key)?.exerciseId ?? key;
+    const events = explainAdjusted(summary.events, adjustment, active.exercises, slotExercise);
     const lastEvents = { ...progress.lastEvents };
-    for (const e of summary.events) if (e.kind !== "skipped") lastEvents[e.key] = { ...e, date: logged.date };
+    for (const e of events) if (e.kind !== "skipped") lastEvents[e.key] = { ...e, date: logged.date };
     await logStore.set([...log.value, logged]);
     await progressStore(active).set({
       ...progress,
       state,
       dayIndex: (active.program.days.findIndex((d) => d.id === day.id) + 1) % active.program.days.length,
       lastEvents,
-      lastSummary: summary,
+      lastSummary: { ...summary, events },
+      // This day's adjustment is used up.
+      adjustments: progress.adjustments?.filter((a) => a.id !== session.adjustmentId),
     });
     await activeSessionStore.set(null);
     router.replace("/train/summary");
@@ -304,7 +317,9 @@ export function GymMode() {
   }
 
   const day = active.program.days[progress.value.dayIndex % active.program.days.length];
-  const prescriptions = prescribe(active.program, day, progress.value.state, athlete);
+  const adjustment = adjustmentFor(progress.value, day.id);
+  const adjusted = applyChanges(prescribe(active.program, day, progress.value.state, athlete), adjustment?.changes ?? []);
+  const prescriptions = adjusted.filter((p) => p.change?.kind !== "skip");
   const ready = prescriptions.filter((p) => p.sets);
 
   return (
@@ -323,17 +338,25 @@ export function GymMode() {
             A session from another program is still open. Starting this one discards it.
           </p>
         ) : null}
+        {adjustment ? (
+          <p className="m-0 rounded-xl border border-gym-track px-4 py-3 text-sm text-gym-muted">
+            Adjusted for: <span className="text-gym-text">{adjustment.constraint}</span>
+          </p>
+        ) : null}
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
-          {prescriptions.map((p) => {
+          {adjusted.map((p) => {
             const exercise = active.exercises.get(p.slot.exerciseId)!;
             const top = p.sets?.at(-1);
+            const skipped = p.change?.kind === "skip";
+            const bodyweight = exercise.equipment === "bodyweight";
             return (
-              <li key={p.key} className="flex items-baseline justify-between gap-3 border-b border-gym-track pb-3">
+              <li key={p.key} className={cn("flex items-baseline justify-between gap-3 border-b border-gym-track pb-3", skipped && "text-gym-muted line-through")}>
                 <span>
                   <span className="font-mono text-xs text-gym-muted">{p.slot.tier} </span>
                   {exercise.name} <span className="font-mono text-sm text-gym-muted">{p.scheme}</span>
+                  {p.change && !skipped ? <span className="ml-2 font-mono text-[11px] text-gym-muted no-underline">adjusted</span> : null}
                 </span>
-                <span className="num text-lg">{top ? formatLoad(top.weight, exercise.equipment === "bodyweight") : "—"}</span>
+                <span className="num text-lg">{skipped ? "skip" : top ? (top.weight === 0 && !bodyweight ? "pick" : formatLoad(top.weight, bodyweight)) : "—"}</span>
               </li>
             );
           })}
@@ -343,7 +366,7 @@ export function GymMode() {
           disabled={!ready.length}
           onClick={() =>
             void activeSessionStore.set(
-              startSession({ id: `log-${Date.now()}`, programId: active.program.id, day, prescriptions, now: new Date() }),
+              startSession({ id: `log-${Date.now()}`, programId: active.program.id, day, prescriptions, now: new Date(), adjustmentId: adjustment?.id }),
             )
           }
           className="mt-auto h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg disabled:opacity-50"

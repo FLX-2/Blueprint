@@ -7,6 +7,7 @@ import { stateFromHistory, type ProgramState, type RuleEvent, type SlotKey } fro
 import type { ActiveProgram } from "@/lib/program/store";
 import { idbDelete } from "@/lib/storage/idb";
 import { persisted, type Loaded } from "@/lib/storage/persisted";
+import type { DayAdjustment } from "@/lib/adapt/changes";
 import type { ActiveSession, SessionSummary } from "./session";
 
 /**
@@ -22,7 +23,14 @@ export type Progress = {
   dayIndex: number;
   lastEvents: Partial<Record<SlotKey, RuleEvent & { date: IsoDate }>>;
   lastSummary: SessionSummary | null;
+  /** Temporary changes for coming sessions (Bend the week), used up as each day is trained. */
+  adjustments?: DayAdjustment[];
 };
+
+/** The pending adjustment for the next time this day is trained, if any. */
+export function adjustmentFor(progress: Progress, dayId: string) {
+  return progress.adjustments?.find((a) => a.dayId === dayId);
+}
 
 let sampleStart: Progress | null = null;
 /** Where the sample athlete stands after their 18 months of history. */

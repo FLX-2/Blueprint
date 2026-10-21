@@ -40,6 +40,7 @@ src/app/(app)/     Routes with the app shell: plan, train, review, settings
 src/app/(focus)/   Full-screen routes without navigation: gym mode, welcome
 src/components/    Shell (nav, Ask bar), UI primitives, charts
 src/lib/domain/    Types and plain-language descriptions of programs and rules
+src/lib/adapt/     Bend the week: checks, weights and effects for proposed changes
 src/lib/calc/      Deterministic training math (e1RM, weekly sets, rounding)
 src/data/seed/     Sample athlete: exercises, GZCLP program, generated history
 ```
@@ -100,6 +101,17 @@ Without an API key, import offers a scripted example of the GZCLP text: the AI's
 - **Logs flow everywhere.** Train shows the next day with each target's reason; Review, lift pages and Ask analyze logged sessions along with the imported or sample history. Settings can clear the log.
 - **Offline.** A service worker (`public/sw.js`, production builds only) caches the app, so it opens with no connection; unknown pages fall back to gym mode. `experimental.useOffline` drives an offline banner. The manifest makes it installable, opening straight to Train.
 
+## Bend the week (F3)
+
+`/plan/adapt` adjusts the coming sessions when life gets in the way ("traveling, hotel gym only", "35 minutes", "my back hurts"). Get there from Plan, from Train ("Something changed?"), or by typing the change into the Ask bar.
+
+- **AI proposes, code checks.** The model (`/api/adapt-week`, structured output) proposes swaps, fewer sets or skips for the next sessions. `checkProposals()` turns down anything that isn't on that day, isn't in the library, needs equipment the chosen gym doesn't have, or adds sets, and flags swaps that train different muscles.
+- **Code sets the weights.** A substitute starts at ~90% of what the log says, capped at the gym's heaviest dumbbell. With no log it's estimated from the lift it replaces and labeled as an estimate. Pain always gets the same fixed safety note.
+- **See what the week loses.** Sets per muscle group before and after, and which lifts hold at their targets, update as you accept or decline each change. Nothing applies until you accept it.
+- **Temporary by design.** Accepted changes are saved per day and used once, in rotation order. The program and its rules don't change; a swapped or skipped lift holds its target and the summary says why ("Swapped for Goblet Squat this time, so Back Squat stays at 290 lb"). Train shows what's adjusted, with Undo.
+- **Ask bar routing.** `routeIntent()` sends plan changes to Bend the week and everything else to Ask, with plain matching so it's instant and predictable.
+- **No key?** With the sample program, "Use the example" runs a scripted proposal for the hotel-gym trip. Only the model's side is scripted; the checks, weights and effects run for real.
+
 ## Rule engine
 
 `src/lib/engine/` runs a program's progression rules. It's pure code with no AI: the AI only reads rules out of a pasted program (F1), and this is what runs them.
@@ -114,6 +126,7 @@ Without an API key, import offers a scripted example of the GZCLP text: the AI's
 - **Phase 0 (foundation):** tokens, app shell, seed data, placeholder routes.
 - **Phase 1 (Review):** history import with exercise-name cleanup (F5) and Ask with tools, charts and evidence (F4) are done. 
 - **Phase 2 (Plan + Train):** the rule engine, program import & review (F1) and gym mode logging (F2) are done. Sessions logged offline feed the engine, Review and Ask.
-- **Next (Phase 3):** Bend the week (F3), Ask routing for plan changes, and a polish and accessibility pass.
+- **Phase 3 (Adapt):** Bend the week (F3) and Ask bar routing for plan changes are done.
+- **Next:** a polish and accessibility pass.
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

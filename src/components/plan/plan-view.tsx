@@ -8,16 +8,19 @@ import { Eyebrow, Tag } from "@/components/ui/text";
 import { describeRule, formatScheme, ruleTitle } from "@/lib/domain/describe";
 import { formatLongDate } from "@/lib/format";
 import { clearProgram, useActiveProgram } from "@/lib/program/store";
+import { useProgress } from "@/lib/train/store";
 
 /** The active program: the sample's GZCLP, or one the lifter imported and approved. */
 export function PlanView() {
   const state = useActiveProgram();
+  const progress = useProgress(state.status === "ready" ? state.active : null);
   if (state.status === "loading") return <PageHeader trail="Plan" title="Loading your program…" />;
 
   const { program, exercises } = state.active;
   const imported = state.active.kind === "imported" ? state.active.stored : null;
   const confirmed = program.rules.filter((r) => r.status === "confirmed").length;
   const nameOf = (id: string) => exercises.get(id)?.name ?? id;
+  const adjusted = new Set(progress.status === "ready" ? (progress.value.adjustments ?? []).map((a) => a.dayId) : []);
 
   return (
     <>
@@ -36,6 +39,9 @@ export function PlanView() {
                 Use the sample program
               </Button>
             ) : null}
+            <Link href="/plan/adapt" className={buttonClasses({ variant: "secondary" })}>
+              Bend the week
+            </Link>
             <Link href="/plan/import" className={buttonClasses({ variant: "secondary" })}>
               Import a program
             </Link>
@@ -51,7 +57,10 @@ export function PlanView() {
         <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 xl:grid-cols-4">
           {program.days.map((day) => (
             <div key={day.id} className="flex flex-col gap-2.5 bg-surface px-5 py-4">
-              <Eyebrow>Day {day.name}</Eyebrow>
+              <span className="flex items-center justify-between gap-2">
+                <Eyebrow>Day {day.name}</Eyebrow>
+                {adjusted.has(day.id) ? <Tag>Adjusted next time</Tag> : null}
+              </span>
               {day.slots.map((slot) => (
                 <div key={`${slot.tier}-${slot.exerciseId}`} className="grid grid-cols-[28px_1fr_auto] items-baseline gap-2">
                   <span className="font-mono text-xs text-muted">{slot.tier}</span>
