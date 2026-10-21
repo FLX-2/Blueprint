@@ -115,8 +115,8 @@ function SetPanel({
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* The set: centered in the open space, sliding in fresh for each set. */}
-      <div className="step-forward flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+      {/* The set: left-aligned with the heading, in the open space, sliding in fresh for each set. */}
+      <div className="step-forward flex flex-1 flex-col justify-center gap-3 py-10">
         <p className="m-0 flex items-baseline gap-2">
           <span className="font-display text-gym leading-none font-medium tracking-[-0.03em]">{needsWeight ? "—" : bodyweight && weight === 0 ? "BW" : weight}</span>
           {needsWeight ? (
@@ -277,7 +277,7 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
       <main inert={confirming} className="mx-auto flex w-full max-w-[440px] flex-1 flex-col px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {complete ? (
           <div className="flex flex-1 flex-col">
-            <div className="enter-up flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+            <div className="enter-up flex flex-1 flex-col justify-center gap-3 py-10">
               <h1 className="m-0 font-display text-5xl font-medium">All sets done.</h1>
               <p className="m-0 max-w-[320px] text-md text-gym-muted">Finish to save the session and let the rules set your next targets.</p>
             </div>
