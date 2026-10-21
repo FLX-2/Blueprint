@@ -116,21 +116,28 @@ function SetPanel({
   return (
     <div className="flex flex-1 flex-col">
       {/* The set: left-aligned with the heading, in the open space, sliding in fresh for each set. */}
-      <div className="step-forward flex flex-1 flex-col justify-center gap-3 py-10">
-        <p className="m-0 flex items-baseline gap-2">
-          <span className="font-display text-gym leading-none font-medium tracking-[-0.03em]">{needsWeight ? "—" : bodyweight && weight === 0 ? "BW" : weight}</span>
-          {needsWeight ? (
-            <span className="font-mono text-md text-gym-muted">pick a weight</span>
-          ) : bodyweight && weight === 0 ? null : (
-            <span className="font-mono text-md text-gym-muted">{bodyweight ? "lb added" : "lb"}</span>
-          )}
-        </p>
-        <p className="m-0 font-mono text-2xl font-medium">
-          × {set.targetReps}
-          {set.amrap ? "+" : ""} reps
-        </p>
-        {set.amrap ? <p className="m-0 text-base text-gym-muted">Last set: as many as you can</p> : null}
-        {plates?.perSide.length ? <p className="m-0 mt-2 font-mono text-sm text-gym-muted">Per side: {plates.perSide.join(" · ")}</p> : null}
+      <div className="step-forward flex flex-1 flex-col justify-center gap-5 py-10">
+        {/* What to lift and how many times, read as one unit. */}
+        <div className="flex flex-col gap-2">
+          <p className="m-0 flex items-baseline gap-2">
+            <span className="font-display text-gym leading-[0.9] font-medium tracking-[-0.03em]">{needsWeight ? "—" : bodyweight && weight === 0 ? "BW" : weight}</span>
+            {needsWeight ? (
+              <span className="font-mono text-md text-gym-muted">pick a weight</span>
+            ) : bodyweight && weight === 0 ? null : (
+              <span className="font-mono text-lg text-gym-muted">{bodyweight ? "lb added" : "lb"}</span>
+            )}
+          </p>
+          <p className="m-0 font-mono text-2xl font-medium">
+            × {set.targetReps}
+            {set.amrap ? "+" : ""} reps
+          </p>
+        </div>
+        {set.amrap || plates?.perSide.length ? (
+          <div className="flex flex-col gap-1">
+            {set.amrap ? <p className="m-0 text-base text-gym-muted">Last set: as many as you can</p> : null}
+            {plates?.perSide.length ? <p className="m-0 font-mono text-sm text-gym-muted">Per side: {plates.perSide.join(" · ")}</p> : null}
+          </div>
+        ) : null}
       </div>
 
       {/* Controls: anchored at the bottom, in thumb reach, and steady between sets. */}
