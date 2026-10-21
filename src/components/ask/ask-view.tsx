@@ -18,6 +18,7 @@ import { formatLongDate } from "@/lib/format";
 import { AnswerChart } from "./answer-chart";
 import { EvidencePanel } from "./evidence-panel";
 import { markAsked } from "@/lib/onboarding";
+import { useLiveAi } from "@/components/ai-status";
 
 class AskUnavailable extends Error {}
 
@@ -87,6 +88,7 @@ export function AskView() {
   const params = useSearchParams();
   const router = useRouter();
   const dataset = useTrainingData();
+  const live = useLiveAi();
   const [thread, setThread] = useState<Thread>(emptyThread);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
@@ -106,6 +108,17 @@ export function AskView() {
     setDraft("");
 
     const update = (patch: Partial<Turn>) => setTurns((t) => t.map((x, i) => (i === index ? { ...x, ...patch } : x)));
+    // Public demo: no live AI. Say so plainly and offer the scripted example instead of failing.
+    if (!opts.scripted && !live) {
+      update({
+        state: {
+          status: "error",
+          message: "Live AI is turned off on this public demo, so new questions can’t be answered here. The scripted example shows exactly how Ask works.",
+          unavailable: true,
+        },
+      });
+      return;
+    }
     const steps: Step[] = [];
     const { thread: next, outcome } = await runTurn({
       thread: base,
@@ -153,7 +166,8 @@ export function AskView() {
   };
 
   return (
-    <div className="flex flex-wrap items-start gap-8">
+    // data-ask-page: Ask has its own input, so the phone Ask button steps aside here.
+    <div data-ask-page className="flex flex-wrap items-start gap-8">
       <div className="flex min-w-0 flex-[999_1_640px] flex-col gap-10">
         {!turns.length ? (
           <>
@@ -197,13 +211,14 @@ export function AskView() {
               </p>
             ) : null}
 
-            <StepList steps={turn.steps} running={turn.state.status === "running"} />
+            {turn.state.status === "error" && turn.state.unavailable ? null : <StepList steps={turn.steps} running={turn.state.status === "running"} />}
             <p role="status" className="sr-only">
               {turn.state.status === "running" ? "Working out the answer…" : turn.state.status === "answered" || turn.state.status === "text" ? "Answer ready." : ""}
             </p>
 
             {turn.state.status === "error" ? (
               <ErrorCard
+                calm={turn.state.unavailable}
                 message={turn.state.message}
                 canScript={data.kind === "sample"}
                 onScript={() => {
@@ -301,15 +316,16 @@ export function AskView() {
   );
 }
 
-function ErrorCard({ message, canScript, onScript }: { message: string; canScript: boolean; onScript: () => void }) {
+function ErrorCard({ message, canScript, onScript, calm = false }: { message: string; canScript: boolean; onScript: () => void; calm?: boolean }) {
   return (
     <Card className="flex flex-col gap-3 p-5">
-      <p role="alert" className="m-0 text-md">
+      {/* "Live AI is off" is information, not an error. */}
+      <p role={calm ? "status" : "alert"} className="m-0 text-md">
         {message}
       </p>
       {canScript ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="secondary" onClick={onScript}>
+          <Button variant={calm ? "primary" : "secondary"} onClick={onScript}>
             See a scripted example
           </Button>
           <span className="text-sm text-muted">Runs the real tools on the sample data, with the AI’s side scripted.</span>

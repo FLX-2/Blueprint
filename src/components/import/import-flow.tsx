@@ -21,6 +21,7 @@ import { ChooseFile } from "./choose-file";
 import { ColumnMapper } from "./column-mapper";
 import { NameCleanup, type AiState } from "./name-cleanup";
 import { PreviewStep } from "./preview-step";
+import { useLiveAi } from "@/components/ai-status";
 
 type Step = "choose" | "map" | "preview" | "clean";
 const STEPS: Array<{ id: Step; label: string }> = [
@@ -58,6 +59,7 @@ export function ImportFlow() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [ai, setAi] = useState<AiState>({ status: "idle" });
+  const live = useLiveAi();
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
@@ -88,6 +90,10 @@ export function ImportFlow() {
     const pending = needsAi(suggestions);
     if (!pending.length) {
       setAi({ status: "idle" });
+      return;
+    }
+    if (!live) {
+      setAi({ status: "off", message: "Live AI is turned off on this public demo." });
       return;
     }
     setAi({ status: "loading", names: new Set(pending) });

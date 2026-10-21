@@ -23,6 +23,8 @@ import { initialState, startInputs } from "@/lib/program/start";
 import { clearProgram, saveProgram, useActiveProgram } from "@/lib/program/store";
 import { ReviewStep, type CheckItem, type Selection } from "./review-step";
 import { PreviewStep, WeightsStep, missingWeights } from "./start-steps";
+import { LIVE_AI_OFF, useLiveAi } from "@/components/ai-status";
+import { cn } from "@/lib/cn";
 
 type Step = "paste" | "review" | "weights" | "preview";
 const STEPS: Array<{ id: Step; label: string }> = [
@@ -85,6 +87,9 @@ export function ImportProgram() {
   const [reading, setReading] = useState(false);
   const readRef = useRef<HTMLButtonElement>(null);
   const [error, setError] = useState<string | null>(null);
+  // True when "error" is the public demo's "live AI is off" note rather than a failure.
+  const [offline, setOffline] = useState(false);
+  const live = useLiveAi();
   const [scripted, setScripted] = useState(false);
   const [draft, setDraft] = useState<ProgramDraft | null>(null);
   const [selected, setSelected] = useState<Selection>(null);
@@ -118,8 +123,18 @@ export function ImportProgram() {
   }
 
   async function read() {
-    setReading(true);
     setError(null);
+    setOffline(false);
+    if (!live) {
+      // Public demo: the example gets its scripted reading; anything else gets a plain note.
+      if (text.trim() === EXAMPLE_PROGRAM_TEXT.trim()) open(draftFrom(EXAMPLE_EXTRACTION, EXAMPLE_PROGRAM_TEXT, exercises), true);
+      else {
+        setOffline(true);
+        setError(`${LIVE_AI_OFF} The example program shows how import works, start to finish.`);
+      }
+      return;
+    }
+    setReading(true);
     try {
       const res = await fetch("/api/extract-program", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
       const reply = (await res.json().catch(() => null)) as ExtractReply | { error: string } | null;
@@ -226,13 +241,13 @@ export function ImportProgram() {
               ) : null}
             </Card>
             {error ? (
-              <Card className="flex flex-col gap-3 border-danger p-5">
-                <p role="alert" className="m-0 text-md">
+              <Card className={cn("flex flex-col gap-3 p-5", !offline && "border-danger")}>
+                <p role={offline ? "status" : "alert"} className="m-0 text-md">
                   {error}
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
-                    variant="secondary"
+                    variant={offline ? "primary" : "secondary"}
                     onClick={() => {
                       setText(EXAMPLE_PROGRAM_TEXT);
                       setError(null);
@@ -287,7 +302,7 @@ export function ImportProgram() {
       </StepBody>
 
       {step === "paste" ? (
-        <StepFooter status={reading ? "Reading your program…" : "The text goes to the AI to read."}>
+        <StepFooter status={reading ? "Reading your program…" : live ? "The text goes to the AI to read." : "Public demo: the example shows how import works."}>
           <Button ref={readRef} variant="primary" onClick={read} disabled={reading || text.trim().length < 20}>
             {reading ? "Reading…" : "Read program"}
           </Button>

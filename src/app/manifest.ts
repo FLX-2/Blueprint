@@ -10,6 +10,12 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#121311",
     theme_color: "#121311",
-    icons: [{ src: "/icons/blueprint.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
+    // PNGs for install (Android needs 192 and 512; the maskable one keeps the glyph in the safe zone).
+    icons: [
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icons/blueprint.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+    ],
   };
 }

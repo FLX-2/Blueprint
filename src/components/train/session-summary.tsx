@@ -75,13 +75,17 @@ export function SessionSummary() {
 
         <dl className="m-0 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-gym-track bg-gym-track">
           {[
-            ["Time", `${summary.durationMin} min`],
-            ["Sets", `${summary.setsDone}/${summary.setsPlanned}`],
-            ["Volume", `${Math.round(summary.volume).toLocaleString("en-US")} lb`],
-          ].map(([label, value]) => (
-            <div key={label} className="flex flex-col gap-1 bg-gym-bg px-4 py-3">
+            ["Time", String(summary.durationMin), "min"],
+            ["Sets", `${summary.setsDone}/${summary.setsPlanned}`, ""],
+            ["Volume", Math.round(summary.volume).toLocaleString("en-US"), "lb"],
+          ].map(([label, value, unit]) => (
+            <div key={label} className="flex min-w-0 flex-col gap-1 bg-gym-bg px-4 py-3">
               <dt className="font-mono text-[11px] tracking-[0.08em] text-gym-muted uppercase">{label}</dt>
-              <dd className="num m-0 text-xl font-medium">{value}</dd>
+              {/* The unit sits small beside the number, so big volumes stay on one line on phones. */}
+              <dd className="m-0 flex items-baseline gap-1 whitespace-nowrap">
+                <span className="num text-xl font-medium">{value}</span>
+                {unit ? <span className="font-mono text-sm text-gym-muted">{unit}</span> : null}
+              </dd>
             </div>
           ))}
         </dl>
@@ -91,7 +95,7 @@ export function SessionSummary() {
             <h2 className="m-0 font-mono text-xs tracking-[0.08em] text-gym-muted uppercase">New bests</h2>
             {summary.bests.map((b) => (
               <p key={b.exerciseId} className="m-0 text-md">
-                <span className="font-semibold">{nameOf(b.exerciseId)}</span>: est. 1RM <span className="num">{Math.round(b.e1rm)} lb</span>
+                <span className="font-semibold">{nameOf(b.exerciseId)}</span>: est. 1RM <span className="num">{Math.round(b.e1rm)}</span> lb
                 <span className="text-gym-muted">
                   {" "}
                   from {b.set.weight} × {b.set.reps}

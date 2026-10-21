@@ -134,6 +134,22 @@ Checked with axe-core (WCAG 2.2 AA plus best practices) on every screen and its 
 - **Motion.** `prefers-reduced-motion` turns off transitions, animations and smooth scrolling.
 - **Errors.** Error pages for the app shell and gym mode say that saved data is untouched and offer Try again; there's also a 404 page.
 
+## Phone, install and the public demo
+
+Blueprint is a mobile-first web app, installable as a PWA (the original plan; there's no separate native app).
+
+- **Phones** get a bottom tab bar and a floating Ask button that opens a bottom sheet (a native `<dialog>`: focus, Escape, inert page). It steps aside on Ask's own page and while a flow's Back/Continue bar is pinned.
+- **Install:** PNG icons (Apple 180, 192, 512, maskable 512), `appleWebApp` metadata and a theme color. Installed, it opens straight to Train and works offline.
+- **Public demo without live AI:** with no `ANTHROPIC_API_KEY`, the server tells the browser live AI is off (presence only, never the key). Ask, program import and Bend the week then go straight to their labeled scripted examples with a calm note instead of failing, history import uses code matches only, and Settings says which mode is on. Your own machine, with a key in `.env.local`, keeps live AI.
+
+### Deploying (Vercel)
+
+1. At vercel.com/new, import the GitHub repo. Keep the Next.js defaults; set Node 24 if asked.
+2. Don't add `ANTHROPIC_API_KEY` for the public site, so visitors can't spend your credits.
+3. After it's live, check: `/` opens the welcome screen, Settings says "Live AI: Off", and on a phone, Add to Home Screen installs it.
+
+Case-study mockups (phone and desktop, device-framed) are in [case-study/](case-study/README.md).
+
 ## Rule engine
 
 `src/lib/engine/` runs a program's progression rules. It's pure code with no AI: the AI only reads rules out of a pasted program (F1), and this is what runs them.
@@ -151,6 +167,7 @@ Checked with axe-core (WCAG 2.2 AA plus best practices) on every screen and its 
 - **Phase 3 (Adapt):** Bend the week (F3) and Ask bar routing for plan changes are done.
 - **Polish and accessibility:** axe-clean in both themes at both widths, with keyboard and screen reader fixes, error pages and a 404 page.
 - **Onboarding and polish:** welcome screen, sample-data bar and Getting started checklist; plain names for tiers and workouts; one step layout for every flow, with a clearer import review; flows start fresh on each visit; calm motion and cleaner field focus.
-- **Next:** Depth (form check), the third concept.
+- **Mobile demo:** phone polish (floating Ask, compact checklist and stepper), install icons, a public mode without live AI, and case-study mockups.
+- **Next:** deploy the public demo; later, Depth (form check), the third concept.
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

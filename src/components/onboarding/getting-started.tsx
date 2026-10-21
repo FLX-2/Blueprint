@@ -49,7 +49,8 @@ export function GettingStarted() {
       </div>
       <ol className="m-0 grid list-none gap-px bg-border p-0 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((s, i) => (
-          <li key={s.href} className="bg-surface">
+          // Phones show just the next step; the rest are a tap away on larger screens.
+          <li key={s.href} className={cn("bg-surface", i !== next && "hidden sm:block")}>
             <Link
               href={s.href}
               aria-current={i === next ? "step" : undefined}

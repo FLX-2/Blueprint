@@ -46,13 +46,14 @@ export function FlowStepper({
               >
                 {done ? <CheckIcon width={13} height={13} strokeWidth={3} /> : i + 1}
               </span>
-              <span className={cn("text-sm whitespace-nowrap", here ? "font-semibold text-fg" : done ? "text-fg-secondary" : "text-muted")}>{s.label}</span>
+              {/* Phones show every step's number, but only the current step's name. */}
+              <span className={cn("text-sm whitespace-nowrap", here ? "font-semibold text-fg" : done ? "sr-only text-fg-secondary sm:not-sr-only" : "sr-only text-muted sm:not-sr-only")}>{s.label}</span>
               <span className="sr-only">{done ? " (done)" : here ? " (current step)" : ""}</span>
             </>
           );
           return (
             <li key={s.id} className="flex items-center gap-2" aria-current={here ? "step" : undefined}>
-              {i > 0 ? <span className={cn("h-px w-4 shrink-0 sm:w-10", i <= current ? "bg-accent" : "bg-border")} aria-hidden="true" /> : null}
+              {i > 0 ? <span className={cn("h-px w-5 shrink-0 sm:w-10", i <= current ? "bg-accent" : "bg-border")} aria-hidden="true" /> : null}
               {go ? (
                 <button type="button" onClick={() => onGo(i)} className="flex items-center gap-2 rounded-sm py-1 hover:[&>span:nth-child(2)]:text-fg">
                   {inner}
@@ -96,7 +97,7 @@ export function StepBody({ stepKey, direction, children }: { stepKey: string; di
 /** The pinned bar: where you stand on the left, Back and the next action on the right. */
 export function StepFooter({ status, children }: { status?: ReactNode; children: ReactNode }) {
   return (
-    <div className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] z-10 md:bottom-4">
+    <div data-step-footer className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] z-10 md:bottom-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface/90 px-4 py-3 shadow-popover backdrop-blur-md">
         <span aria-live="polite" className="min-w-0 text-sm text-fg-secondary">
           {status}

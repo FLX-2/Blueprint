@@ -7,6 +7,7 @@ import { TrainingLogSetting } from "@/components/train/training-settings";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { athlete, sessions } from "@/data/seed";
+import { liveAiEnabled } from "@/lib/ai/status";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -28,6 +29,13 @@ export default function SettingsPage() {
         <CardHeader title="Appearance" />
         <Row label="Theme">
           <ThemeSwitcher />
+        </Row>
+      </Card>
+
+      <Card className="max-w-[720px]">
+        <CardHeader title="AI" meta="Program reading, Ask, name matching, Bend the week" />
+        <Row label="Live AI">
+          <span className="text-base text-fg-secondary">{liveAiEnabled() ? "On, using this server’s Anthropic key" : "Off: scripted examples (public demo)"}</span>
         </Row>
       </Card>
 

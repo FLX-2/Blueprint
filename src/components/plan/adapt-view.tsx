@@ -30,6 +30,7 @@ import { formatLoad } from "@/lib/format";
 import { useActiveProgram, type ActiveProgram } from "@/lib/program/store";
 import { nextDayOf, type Progress, progressStore, useProgress } from "@/lib/train/store";
 import { StepFooter } from "@/components/ui/flow";
+import { LIVE_AI_OFF, useLiveAi } from "@/components/ai-status";
 
 const STARTERS: Array<{ label: string; text: string; gym?: string }> = [
   { label: "Traveling", text: "Traveling for my next three sessions, hotel gym only.", gym: "hotel" },
@@ -75,6 +76,7 @@ function AdaptWithQuery(props: Parameters<typeof Adapt>[0]) {
 function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; progress: Progress; sessions: Parameters<typeof checkProposals>[0]["sessions"]; end: string }) {
   const router = useRouter();
   const params = useSearchParams();
+  const live = useLiveAi();
   const [constraint, setConstraint] = useState(() => params.get("c") ?? "");
   const [gymId, setGymId] = useState("");
   const [count, setCount] = useState(Math.min(3, active.program.days.length));
@@ -105,6 +107,10 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
   }
 
   async function propose() {
+    if (!live) {
+      setError(LIVE_AI_OFF);
+      return;
+    }
     const gym = gyms.find((g) => g.id === gymId) ?? null;
     const upcoming = upcomingSessions(program, progress.state, progress.dayIndex, athlete, count);
     const body: AdaptRequest = {
@@ -286,22 +292,28 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
               </label>
             </div>
             {error ? (
-              <p role="alert" className="m-0 rounded-md border border-border bg-surface-raised px-4 py-3 text-base text-fg-secondary">
+              <p role={live ? "alert" : "status"} className="m-0 rounded-md border border-border bg-surface-raised px-4 py-3 text-base text-fg-secondary">
                 {error}
                 {exampleFits ? " You can still see how it works with the example." : ""}
               </p>
             ) : null}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm text-muted">The AI proposes swaps; code checks each one against your gym and sets the weights.</span>
+              <span className="text-sm text-muted">
+                {live
+                  ? "The AI proposes swaps; code checks each one against your gym and sets the weights."
+                  : "Public demo: the example (a hotel-gym trip) shows how the AI’s swaps get checked and weighed."}
+              </span>
               <div className="flex gap-2">
                 {exampleFits ? (
-                  <Button variant="secondary" onClick={runExample} disabled={busy}>
+                  <Button variant={live ? "secondary" : "primary"} onClick={runExample} disabled={busy}>
                     Use the example
                   </Button>
                 ) : null}
-                <Button ref={proposeRef} variant="ai" onClick={propose} disabled={busy || constraint.trim().length < 3}>
-                  {busy ? "Working it out…" : "Propose changes"}
-                </Button>
+                {live || !exampleFits ? (
+                  <Button ref={proposeRef} variant="ai" onClick={propose} disabled={busy || constraint.trim().length < 3}>
+                    {busy ? "Working it out…" : "Propose changes"}
+                  </Button>
+                ) : null}
                 <span role="status" className="sr-only">
                   {busy ? "Working out changes for the coming sessions…" : ""}
                 </span>

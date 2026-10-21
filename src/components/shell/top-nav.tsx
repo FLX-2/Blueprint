@@ -18,7 +18,7 @@ export function TopNav() {
         <AskBar />
         <Link
           href="/settings"
-          className="flex size-9 items-center justify-center rounded-full border border-border bg-surface-raised text-sm font-semibold text-fg no-underline"
+          className="ml-auto flex size-9 items-center justify-center rounded-full border border-border bg-surface-raised text-sm font-semibold text-fg no-underline md:ml-0"
         >
           {athlete.initials}
           <span className="sr-only">, settings and account</span>

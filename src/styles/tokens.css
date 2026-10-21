@@ -386,6 +386,25 @@ select,
   }
 }
 
+/* Phone Ask button: out of the way while a flow's Back/Continue bar is pinned. */
+body:has([data-step-footer]) .phone-ask,
+body:has([data-ask-page]) .phone-ask {
+  display: none;
+}
+
+/* Bottom sheets (<dialog class="sheet">) slide up; the backdrop fades. */
+@media (prefers-reduced-motion: no-preference) {
+  dialog.sheet[open] {
+    animation: bp-sheet-up var(--bp-duration-slow) var(--bp-ease-standard);
+  }
+  dialog.sheet[open]::backdrop {
+    animation: bp-fade var(--bp-duration-base) var(--bp-ease-standard);
+  }
+}
+@keyframes bp-sheet-up {
+  from { transform: translateY(24px); opacity: 0; }
+}
+
 /* Theme changes apply instantly (see ThemeSwitcher). */
 .theme-switching *,
 .theme-switching *::before,
