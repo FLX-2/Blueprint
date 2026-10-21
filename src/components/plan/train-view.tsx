@@ -7,40 +7,37 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { athlete } from "@/data/seed";
 import { prescribe } from "@/lib/engine/engine";
 import { platesFor } from "@/lib/engine/plates";
-import { todaysSession } from "@/lib/engine/today";
 import { formatLoad, formatShortDate } from "@/lib/format";
 import { useActiveProgram } from "@/lib/program/store";
+import { activeSessionStore, useProgress } from "@/lib/train/store";
 
-/**
- * Today's targets from the rule engine. For the sample program they come
- * from the athlete's log; for an approved import, from the starting weights
- * (logging sessions against it arrives with gym mode, F2).
- */
+/** Today's targets from the rule engine, for whichever program is active, and a way into gym mode. */
 export function TrainView() {
-  const state = useActiveProgram();
-  if (state.status === "loading") return <PageHeader trail="Train" title="Loading your program…" />;
+  const program = useActiveProgram();
+  const active = program.status === "ready" ? program.active : null;
+  const progress = useProgress(active);
+  const session = activeSessionStore.useValue();
 
-  const active = state.active;
-  const imported = active.kind === "imported";
-  const { day, items } = imported
-    ? (() => {
-        const first = active.program.days[0];
-        return {
-          day: first,
-          items: prescribe(active.program, first, active.stored.state, athlete).map((p) => {
-            const exercise = active.exercises.get(p.slot.exerciseId)!;
-            const weight = p.sets?.at(-1)?.weight ?? null;
-            return {
-              ...p,
-              exercise,
-              weight,
-              plates: weight !== null && exercise.equipment === "barbell" ? platesFor(weight, athlete.barWeight) : null,
-              because: undefined,
-            };
-          }),
-        };
-      })()
-    : todaysSession();
+  if (!active || progress.status !== "ready" || session.status !== "ready") {
+    return <PageHeader trail="Train" title="Loading your program…" />;
+  }
+
+  const { state, dayIndex, lastEvents, lastSummary } = progress.value;
+  const day = active.program.days[dayIndex % active.program.days.length];
+  const open = session.value && session.value.programId === active.program.id ? session.value : null;
+  const logged = open ? open.slots.reduce((n, s) => n + s.sets.filter((x) => x.done).length, 0) : 0;
+  const total = open ? open.slots.reduce((n, s) => n + s.sets.length, 0) : 0;
+  const items = prescribe(active.program, day, state, athlete).map((p) => {
+    const exercise = active.exercises.get(p.slot.exerciseId)!;
+    const weight = p.sets?.at(-1)?.weight ?? null;
+    return {
+      ...p,
+      exercise,
+      weight,
+      plates: weight !== null && exercise.equipment === "barbell" ? platesFor(weight, athlete.barWeight) : null,
+      because: lastEvents[p.key],
+    };
+  });
 
   return (
     <>
@@ -48,18 +45,22 @@ export function TrainView() {
         trail="Train"
         title={
           <>
-            Day {day.name}, <span className="font-normal italic">{imported ? "first up" : "next up"}</span>
+            Day {open ? active.program.days.find((d) => d.id === open.dayId)?.name : day.name},{" "}
+            <span className="font-normal italic">{open ? "in progress" : "next up"}</span>
           </>
         }
-        meta={`${active.program.name} · ${day.slots.length} exercises`}
+        meta={`${active.program.name} · ${open ? `${logged} of ${total} sets logged` : `${day.slots.length} exercises`}`}
         actions={
-          imported ? (
-            <span className="text-sm text-muted">Logging arrives with gym mode (F2)</span>
-          ) : (
-            <Link href="/train/session/demo" className={buttonClasses({ variant: "primary", size: "lg" })}>
-              Start session
+          <>
+            {lastSummary && !open ? (
+              <Link href="/train/summary" className={buttonClasses({ variant: "secondary" })}>
+                Last session
+              </Link>
+            ) : null}
+            <Link href="/train/session" className={buttonClasses({ variant: "primary", size: "lg" })}>
+              {open ? "Resume session" : "Start session"}
             </Link>
-          )
+          </>
         }
       />
 
@@ -78,15 +79,17 @@ export function TrainView() {
               <span className="col-start-2 row-start-2 font-mono text-xl font-medium sm:col-start-3 sm:row-start-1 sm:text-right">
                 {item.weight !== null ? formatLoad(item.weight, item.exercise.equipment === "bodyweight") : "Set a starting weight"}
               </span>
-              {item.because ? (
-                <span className="col-start-2 text-sm text-fg-secondary sm:col-span-2">
-                  <span className="font-mono text-muted">{formatShortDate(item.because.date)} · </span>
-                  {item.because.message}
-                  {item.note ? <span className="text-muted"> · {item.note}</span> : null}
-                </span>
-              ) : imported ? (
-                <span className="col-start-2 text-sm text-fg-secondary sm:col-span-2">Your starting weight.</span>
-              ) : null}
+              <span className="col-start-2 text-sm text-fg-secondary sm:col-span-2">
+                {item.because ? (
+                  <>
+                    <span className="font-mono text-muted">{formatShortDate(item.because.date)} · </span>
+                    {item.because.message}
+                  </>
+                ) : (
+                  "Your starting weight."
+                )}
+                {item.note ? <span className="text-muted"> · {item.note}</span> : null}
+              </span>
               {item.plates && item.plates.perSide.length ? (
                 <span className="col-start-2 font-mono text-xs text-muted sm:col-span-2">
                   Per side: {item.plates.perSide.join(" · ")}

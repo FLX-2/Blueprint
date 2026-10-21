@@ -6,11 +6,11 @@ import { PageHeader } from "@/components/shell/page-header";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { liftTrend, weeklyBest } from "@/lib/calc/strength";
-import { useDataset } from "@/lib/dataset/store";
+import { useTrainingData } from "@/lib/dataset/training";
 import { formatLb, formatLongDate } from "@/lib/format";
 
 export function LiftDetail({ id }: { id: string }) {
-  const state = useDataset();
+  const state = useTrainingData();
   if (state.status === "loading") {
     return <PageHeader trail="Review / Lifts" title="Loading lift…" />;
   }

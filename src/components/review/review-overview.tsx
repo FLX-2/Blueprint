@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shell/page-header";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Tag } from "@/components/ui/text";
-import { useDataset } from "@/lib/dataset/store";
+import { useTrainingData } from "@/lib/dataset/training";
 import { formatChange, formatLb, formatShortDate } from "@/lib/format";
 import { chestWeeks, liftCards } from "@/lib/review/overview";
 
@@ -17,7 +17,7 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 export function ReviewOverview() {
-  const state = useDataset();
+  const state = useTrainingData();
 
   if (state.status === "loading") {
     return (

@@ -10,7 +10,7 @@ import { Eyebrow } from "@/components/ui/text";
 import { athlete } from "@/data/seed";
 import { exerciseById, exercises } from "@/data/seed/exercises";
 import { cn } from "@/lib/cn";
-import { useDataset } from "@/lib/dataset/store";
+import { useTrainingData } from "@/lib/dataset/training";
 import type { Exercise } from "@/lib/domain/types";
 import type { SlotKey } from "@/lib/engine/engine";
 import type { MatchResponse } from "@/lib/import/ai-match-schema";
@@ -74,7 +74,7 @@ function customExercisesFor(draft: ProgramDraft): Exercise[] {
 
 export function ImportProgram() {
   const router = useRouter();
-  const dataset = useDataset();
+  const dataset = useTrainingData();
   const active = useActiveProgram();
   const [step, setStep] = useState<Step>("paste");
   const [text, setText] = useState("");

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/shell/page-header";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { TrainingLogSetting } from "@/components/train/training-settings";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { athlete, sessions } from "@/data/seed";
@@ -44,6 +45,7 @@ export default function SettingsPage() {
 
       <Card className="max-w-[720px]">
         <CardHeader title="Training data" meta={`Sample: ${sessions.length} sessions`} />
+        <TrainingLogSetting />
         <Row label="Import from Strong, Hevy or a CSV">
           <a href="/review/data" className={buttonClasses({ variant: "secondary", size: "sm" })}>
             Import history

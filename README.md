@@ -90,6 +90,16 @@ Without `ANTHROPIC_API_KEY`, Ask says so and offers a **scripted example** on th
 
 Without an API key, import offers a scripted example of the GZCLP text: the AI's reading is scripted, and every step after it runs for real.
 
+## Gym mode (F2)
+
+`/train/session` is the phone screen for training: always dark, one exercise at a time, and fully on-device.
+
+- **Log fast.** One tap logs a set at its target; steppers adjust weight or reps first (a weight change carries to that exercise's remaining sets). AMRAP sets ask for the reps. Undo, jump between exercises, and a rest timer by tier (3:00 / 2:00 / 1:15) that buzzes when it's over.
+- **Never lose a set.** The session is saved to IndexedDB after every change, so a reload, a dead battery or no signal loses nothing. The screen stays awake (Wake Lock).
+- **Finish feeds the engine.** `finishSession()` logs the workout, runs `applySession()`, and the summary shows time, sets, volume, new bests (estimated 1RM), what the rules decided for each lift, and the next day's targets.
+- **Logs flow everywhere.** Train shows the next day with each target's reason; Review, lift pages and Ask analyze logged sessions along with the imported or sample history. Settings can clear the log.
+- **Offline.** A service worker (`public/sw.js`, production builds only) caches the app, so it opens with no connection; unknown pages fall back to gym mode. `experimental.useOffline` drives an offline banner. The manifest makes it installable, opening straight to Train.
+
 ## Rule engine
 
 `src/lib/engine/` runs a program's progression rules. It's pure code with no AI: the AI only reads rules out of a pasted program (F1), and this is what runs them.
@@ -103,6 +113,7 @@ Without an API key, import offers a scripted example of the GZCLP text: the AI's
 
 - **Phase 0 (foundation):** tokens, app shell, seed data, placeholder routes.
 - **Phase 1 (Review):** history import with exercise-name cleanup (F5) and Ask with tools, charts and evidence (F4) are done. 
-- **Phase 2 (Plan + Train):** the rule engine and program import & review (F1) are done; Plan and Train run the active program. Next: gym mode logging (F2), so sessions feed the engine.
+- **Phase 2 (Plan + Train):** the rule engine, program import & review (F1) and gym mode logging (F2) are done. Sessions logged offline feed the engine, Review and Ask.
+- **Next (Phase 3):** Bend the week (F3), Ask routing for plan changes, and a polish and accessibility pass.
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

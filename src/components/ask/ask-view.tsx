@@ -12,7 +12,7 @@ import { emptyThread, runTurn, type Answer, type CallModel, type Step, type Thre
 import { runTool, type ToolResult } from "@/lib/ask/tools";
 import { cn } from "@/lib/cn";
 import type { Dataset } from "@/lib/dataset/dataset";
-import { useDataset } from "@/lib/dataset/store";
+import { useTrainingData } from "@/lib/dataset/training";
 import { formatLongDate } from "@/lib/format";
 import { AnswerChart } from "./answer-chart";
 import { EvidencePanel } from "./evidence-panel";
@@ -84,7 +84,7 @@ function StepList({ steps, running }: { steps: Step[]; running: boolean }) {
 export function AskView() {
   const params = useSearchParams();
   const router = useRouter();
-  const dataset = useDataset();
+  const dataset = useTrainingData();
   const [thread, setThread] = useState<Thread>(emptyThread);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [selected, setSelected] = useState<Selection | null>(null);
