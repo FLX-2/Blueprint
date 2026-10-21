@@ -2,7 +2,7 @@
 
 import { athlete, exerciseById, program as sampleProgram, sessions as sampleSessions } from "@/data/seed";
 import { nextDay } from "@/lib/domain/describe";
-import type { IsoDate, Session } from "@/lib/domain/types";
+import type { IsoDate, Program, ProgramDay, Session } from "@/lib/domain/types";
 import { stateFromHistory, type ProgramState, type RuleEvent, type SlotKey } from "@/lib/engine/engine";
 import type { ActiveProgram } from "@/lib/program/store";
 import { idbDelete } from "@/lib/storage/idb";
@@ -26,6 +26,13 @@ export type Progress = {
   /** Temporary changes for coming sessions (Bend the week), used up as each day is trained. */
   adjustments?: DayAdjustment[];
 };
+
+/** The workout that's up next. Wraps safely whatever the stored index is. */
+export function nextDayOf(program: Program, progress: Progress): ProgramDay {
+  const n = program.days.length;
+  const i = Number.isFinite(progress.dayIndex) ? ((Math.trunc(progress.dayIndex) % n) + n) % n : 0;
+  return program.days[i];
+}
 
 /** The pending adjustment for the next time this day is trained, if any. */
 export function adjustmentFor(progress: Progress, dayId: string) {
@@ -69,7 +76,11 @@ const noProgress = persisted<Progress | null>("progress:none", () => null);
 export function useProgress(active: ActiveProgram | null): Loaded<Progress> {
   const store = (active ? progressStore(active) : noProgress) as typeof noProgress;
   const loaded = store.useValue();
-  return loaded.status === "ready" && loaded.value ? { status: "ready", value: loaded.value } : { status: "loading" };
+  // Right after switching programs (or while a hidden page catches up), the store
+  // can still hold the previous program's progress for a render. Treat that as loading.
+  return loaded.status === "ready" && loaded.value && active && loaded.value.programId === active.program.id
+    ? { status: "ready", value: loaded.value }
+    : { status: "loading" };
 }
 
 /** Every session logged in the app, oldest first. */

@@ -15,7 +15,7 @@ import { prescribe } from "@/lib/engine/engine";
 import { platesFor } from "@/lib/engine/plates";
 import { formatLoad, formatShortDate } from "@/lib/format";
 import { useActiveProgram } from "@/lib/program/store";
-import { activeSessionStore, adjustmentFor, progressStore, useProgress } from "@/lib/train/store";
+import { activeSessionStore, adjustmentFor, nextDayOf, progressStore, useProgress } from "@/lib/train/store";
 
 /** Today's targets from the rule engine, for whichever program is active, and a way into gym mode. */
 export function TrainView() {
@@ -28,8 +28,8 @@ export function TrainView() {
     return <PageHeader trail="Train" title="Loading your program…" />;
   }
 
-  const { state, dayIndex, lastEvents, lastSummary } = progress.value;
-  const day = active.program.days[dayIndex % active.program.days.length];
+  const { state, lastEvents, lastSummary } = progress.value;
+  const day = nextDayOf(active.program, progress.value);
   const open = session.value && session.value.programId === active.program.id ? session.value : null;
   const logged = open ? open.slots.reduce((n, s) => n + s.sets.filter((x) => x.done).length, 0) : 0;
   const total = open ? open.slots.reduce((n, s) => n + s.sets.length, 0) : 0;

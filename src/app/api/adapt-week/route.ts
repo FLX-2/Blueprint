@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { AdaptProposal, AdaptRequest, type AdaptReply } from "@/lib/adapt/schema";
+import { modelParams } from "@/lib/ai/model";
 
 /**
  * Proposes temporary changes to the coming sessions for a constraint
@@ -47,11 +48,8 @@ export async function POST(request: Request) {
   try {
     const client = new Anthropic();
     const response = await client.beta.messages.parse({
-      model: "claude-opus-5-5",
+      ...modelParams(),
       max_tokens: 16000,
-      // Policy declines (unlikely here) retry on Anthropic's recommended model.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       output_config: { effort: "medium", format: betaZodOutputFormat(AdaptProposal) },
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: lines.join("\n") }],

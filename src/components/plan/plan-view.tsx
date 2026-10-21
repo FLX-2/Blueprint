@@ -11,6 +11,20 @@ import { describeRule, formatScheme, ruleTitle } from "@/lib/domain/describe";
 import { formatLongDate } from "@/lib/format";
 import { clearProgram, useActiveProgram } from "@/lib/program/store";
 import { useProgress } from "@/lib/train/store";
+import type { ExerciseSlot, Program } from "@/lib/domain/types";
+import { rulesFor } from "@/lib/engine/engine";
+import { cn } from "@/lib/cn";
+import { GRID_CELL, WorkoutGrid } from "@/components/ui/workout-grid";
+
+/**
+ * The scheme as the rules run it: a rep-range rule shows its range ("4×4–6"),
+ * matching what Train prescribes, rather than the reps as written.
+ */
+function planScheme(program: Program, slot: ExerciseSlot) {
+  const progression = rulesFor(program, slot.tier).progression;
+  if (progression?.kind === "double-progression") return `${slot.scheme.sets}×${progression.repRange.min}–${progression.repRange.max}`;
+  return formatScheme(slot.scheme);
+}
 
 /** The active program: the sample's GZCLP, or one the lifter imported and approved. */
 export function PlanView() {
@@ -58,9 +72,9 @@ export function PlanView() {
 
       <Card>
         <CardHeader title="Workouts" meta={`${program.days.length} · done in order, not on set days`} />
-        <ol className="m-0 grid list-none grid-cols-1 gap-px bg-border p-0 sm:grid-cols-2 xl:grid-cols-4">
+        <WorkoutGrid count={program.days.length} max={4}>
           {program.days.map((day, i) => (
-            <li key={day.id} className="enter-fade flex flex-col gap-4 bg-surface px-5 py-4" style={{ "--i": i } as React.CSSProperties}>
+            <li key={day.id} className={cn(GRID_CELL, "enter-fade flex flex-col gap-4 px-5 py-4")} style={{ "--i": i } as React.CSSProperties}>
               <span className="flex items-center justify-between gap-2">
                 <h3 className="m-0 text-md font-semibold">
                   <DayTitle program={program} day={day} />
@@ -73,14 +87,14 @@ export function PlanView() {
                     <TierLabel tier={slot.tier} />
                     <span className="flex items-baseline justify-between gap-2">
                       <span className="text-base font-medium">{nameOf(slot.exerciseId)}</span>
-                      <span className="font-mono text-sm text-fg-secondary">{formatScheme(slot.scheme)}</span>
+                      <span className="font-mono text-sm text-fg-secondary">{planScheme(program, slot)}</span>
                     </span>
                   </li>
                 ))}
               </ul>
             </li>
           ))}
-        </ol>
+        </WorkoutGrid>
         <div className="border-t border-border px-5 py-3">
           <TermsHelp program={program} />
         </div>

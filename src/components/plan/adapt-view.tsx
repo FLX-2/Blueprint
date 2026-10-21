@@ -28,7 +28,7 @@ import { useTrainingData } from "@/lib/dataset/training";
 import type { Exercise, GymProfile, Program } from "@/lib/domain/types";
 import { formatLoad } from "@/lib/format";
 import { useActiveProgram, type ActiveProgram } from "@/lib/program/store";
-import { progressStore, useProgress, type Progress } from "@/lib/train/store";
+import { nextDayOf, type Progress, progressStore, useProgress } from "@/lib/train/store";
 import { StepFooter } from "@/components/ui/flow";
 
 const STARTERS: Array<{ label: string; text: string; gym?: string }> = [
@@ -86,7 +86,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
   const proposeRef = useRef<HTMLButtonElement>(null);
 
   const { program, exercises } = active;
-  const nextDay = program.days[progress.dayIndex % program.days.length];
+  const nextDay = nextDayOf(program, progress);
   // The scripted example is written for the sample program with Day B2 next.
   const exampleFits = active.kind === "sample" && nextDay.id === "B2";
   const pending = progress.adjustments ?? [];

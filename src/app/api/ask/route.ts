@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import * as z from "zod/v4";
 import { ASK_SYSTEM } from "@/lib/ask/system-prompt";
 import { TOOL_DESCRIPTIONS, ToolInputs, type ToolName } from "@/lib/ask/tool-defs";
+import { modelParams } from "@/lib/ai/model";
 
 /**
  * One model step of the Ask loop. The browser runs the tools on the lifter's
@@ -51,11 +52,8 @@ export async function POST(request: Request) {
   try {
     const client = new Anthropic();
     const response = await client.beta.messages.create({
-      model: "claude-opus-5-5",
+      ...modelParams(),
       max_tokens: 16000,
-      // Policy declines retry on Anthropic's recommended fallback model.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       output_config: { effort: "medium" },
       system: [{ type: "text", text: ASK_SYSTEM, cache_control: { type: "ephemeral" } }],
       tools: TOOLS,

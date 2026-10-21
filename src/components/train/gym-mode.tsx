@@ -18,7 +18,7 @@ import { platesFor } from "@/lib/engine/plates";
 import { formatLoad } from "@/lib/format";
 import { useActiveProgram, type ActiveProgram } from "@/lib/program/store";
 import { finishSession, isComplete, logSet, moveTo, startSession, undoLast, type ActiveSession } from "@/lib/train/session";
-import { activeSessionStore, adjustmentFor, localDate, logStore, progressStore, useProgress, type Progress } from "@/lib/train/store";
+import { activeSessionStore, adjustmentFor, localDate, logStore, nextDayOf, type Progress, progressStore, useProgress } from "@/lib/train/store";
 
 /** Re-renders every `ms` while mounted (for timers). */
 function useNow(ms = 1000) {
@@ -89,7 +89,18 @@ function Stepper({
 }
 
 /** The current set. Keyed by set, so its adjustments reset when the set changes. */
-function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exercise: Exercise; onLog: (weight: number, reps: number) => void }) {
+function SetPanel({
+  session,
+  exercise,
+  onLog,
+  footer,
+}: {
+  session: ActiveSession;
+  exercise: Exercise;
+  onLog: (weight: number, reps: number) => void;
+  /** Under the Log button (Undo). */
+  footer?: ReactNode;
+}) {
   const slot = session.slots[session.cursor.slot];
   const set = slot.sets[session.cursor.set];
   const [weight, setWeight] = useState(set.weight);
@@ -103,35 +114,42 @@ function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exerci
   const logRef = useFocusWhenLost<HTMLButtonElement>();
 
   return (
-    <div className="step-forward flex flex-col gap-4">
-      <p className="m-0 mt-2 flex items-baseline gap-2">
-        <span className="font-display text-gym font-medium tracking-[-0.03em]">{needsWeight ? "—" : bodyweight && weight === 0 ? "BW" : weight}</span>
-        {needsWeight ? (
-          <span className="font-mono text-md text-gym-muted">pick a weight</span>
-        ) : bodyweight && weight === 0 ? null : (
-          <span className="font-mono text-md text-gym-muted">{bodyweight ? "lb added" : "lb"}</span>
-        )}
-      </p>
-      <p className="m-0 font-mono text-2xl font-medium">
-        × {set.targetReps}
-        {set.amrap ? "+" : ""} reps{set.amrap ? <span className="text-md text-gym-muted"> · as many as you can</span> : null}
-      </p>
-      {plates?.perSide.length ? <p className="m-0 font-mono text-sm text-gym-muted">Per side: {plates.perSide.join(" · ")}</p> : null}
-
-      <div className="grid grid-cols-2 gap-2">
-        <Stepper label={bodyweight ? "Added" : "Weight"} unit="lb" value={weight} onChange={setWeight} step={athlete.smallestPlatePair} min={0} format={String} />
-        <Stepper label="Reps" value={reps} onChange={setReps} step={1} min={0} format={String} />
+    <div className="flex flex-1 flex-col">
+      {/* The set: centered in the open space, sliding in fresh for each set. */}
+      <div className="step-forward flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+        <p className="m-0 flex items-baseline gap-2">
+          <span className="font-display text-gym leading-none font-medium tracking-[-0.03em]">{needsWeight ? "—" : bodyweight && weight === 0 ? "BW" : weight}</span>
+          {needsWeight ? (
+            <span className="font-mono text-md text-gym-muted">pick a weight</span>
+          ) : bodyweight && weight === 0 ? null : (
+            <span className="font-mono text-md text-gym-muted">{bodyweight ? "lb added" : "lb"}</span>
+          )}
+        </p>
+        <p className="m-0 font-mono text-2xl font-medium">
+          × {set.targetReps}
+          {set.amrap ? "+" : ""} reps
+        </p>
+        {set.amrap ? <p className="m-0 text-base text-gym-muted">Last set: as many as you can</p> : null}
+        {plates?.perSide.length ? <p className="m-0 mt-2 font-mono text-sm text-gym-muted">Per side: {plates.perSide.join(" · ")}</p> : null}
       </div>
 
-      <button
-        ref={logRef}
-        type="button"
-        onClick={() => onLog(weight, reps)}
-        disabled={needsWeight}
-        className="h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg active:brightness-95 disabled:opacity-50"
-      >
-        {needsWeight ? "Set the weight first" : changed ? `Log ${reps} × ${formatLoad(weight, bodyweight)}` : `Log set · ${reps} reps`}
-      </button>
+      {/* Controls: anchored at the bottom, in thumb reach, and steady between sets. */}
+      <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Stepper label={bodyweight ? "Added" : "Weight"} unit="lb" value={weight} onChange={setWeight} step={athlete.smallestPlatePair} min={0} format={String} />
+          <Stepper label="Reps" value={reps} onChange={setReps} step={1} min={0} format={String} />
+        </div>
+        <button
+          ref={logRef}
+          type="button"
+          onClick={() => onLog(weight, reps)}
+          disabled={needsWeight}
+          className="h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg transition active:scale-[0.99] active:brightness-95 disabled:opacity-50"
+        >
+          {needsWeight ? "Set the weight first" : changed ? `Log ${reps} × ${formatLoad(weight, bodyweight)}` : `Log set · ${reps} reps`}
+        </button>
+        <div className="flex h-11 items-center justify-center">{footer}</div>
+      </div>
     </div>
   );
 }
@@ -256,36 +274,43 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
         })}
       </nav>
 
-      <main inert={confirming} className="mx-auto flex w-full max-w-[440px] flex-1 flex-col gap-4 px-6 pt-4 pb-8">
+      <main inert={confirming} className="mx-auto flex w-full max-w-[440px] flex-1 flex-col px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {complete ? (
-          <div className="flex flex-1 flex-col justify-center gap-4">
-            <h1 className="m-0 font-display text-5xl font-medium">All sets done.</h1>
-            <p className="m-0 text-md text-gym-muted">Finish to save the session and let the rules set your next targets.</p>
-            <button type="button" onClick={finish} disabled={saving} className="h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg disabled:opacity-60">
-              {saving ? "Saving…" : "Finish session"}
-            </button>
-            <button type="button" onClick={() => save(undoLast(session))} className="h-11 text-base text-gym-muted underline-offset-4 hover:underline">
-              Undo last set
-            </button>
+          <div className="flex flex-1 flex-col">
+            <div className="enter-up flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+              <h1 className="m-0 font-display text-5xl font-medium">All sets done.</h1>
+              <p className="m-0 max-w-[320px] text-md text-gym-muted">Finish to save the session and let the rules set your next targets.</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button type="button" onClick={finish} disabled={saving} className="h-15 rounded-xl bg-accent text-lg font-semibold text-accent-fg disabled:opacity-60">
+                {saving ? "Saving…" : "Finish session"}
+              </button>
+              <button type="button" onClick={() => save(undoLast(session))} className="h-11 text-sm text-gym-muted underline-offset-4 hover:underline">
+                Undo last set
+              </button>
+            </div>
           </div>
         ) : (
           <>
-            <div className="flex justify-between font-mono text-xs tracking-[0.06em] text-gym-muted uppercase">
-              <h1 className="m-0 text-xs font-normal">
-                {exercise.name} · {TIER_NAMES[slot.tier].one} ({slot.tier}) · {slot.scheme}
-              </h1>
-              <span>
-                SET {session.cursor.set + 1}/{slot.sets.length}
+            <div className="flex items-end justify-between gap-4">
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <span className="font-mono text-[11px] tracking-[0.08em] text-gym-muted uppercase">
+                  {TIER_NAMES[slot.tier].one} · {slot.tier} · {slot.scheme}
+                </span>
+                <h1 className="m-0 truncate text-2xl font-semibold tracking-[-0.01em]">{exercise.name}</h1>
+              </div>
+              <span className="shrink-0 pb-1 font-mono text-sm text-gym-muted">
+                Set {session.cursor.set + 1} of {slot.sets.length}
               </span>
             </div>
-            <div className="flex gap-1.5" aria-hidden="true">
+            <div className="mt-4 flex gap-1.5" aria-hidden="true">
               {slot.sets.map((x, i) => (
                 <div key={i} className={cn("h-1 flex-1 rounded-full transition-colors duration-300", x.done ? "bg-gym-text" : i === session.cursor.set ? "bg-accent" : "bg-gym-track")} />
               ))}
             </div>
 
             {resting ? (
-              <div role="timer" aria-live="off" className="flex items-center justify-between rounded-xl border border-gym-track px-4 py-3">
+              <div role="timer" aria-live="off" className="enter-fade mt-6 flex items-center justify-between rounded-xl border border-gym-track px-4 py-3">
                 <span className="flex flex-col">
                   <span className="font-mono text-[11px] tracking-[0.08em] text-gym-muted uppercase">Rest</span>
                   <span className="num text-3xl font-medium">{mmss(session.restUntil! - now)}</span>
@@ -310,12 +335,14 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
                 save(next);
                 setAnnouncement(logAnnouncement(session, next, weight, reps, exercise, (id) => active.exercises.get(id)?.name ?? id));
               }}
+              footer={
+                done ? (
+                  <button type="button" onClick={() => save(undoLast(session))} className="h-11 px-3 text-sm text-gym-muted underline-offset-4 hover:underline">
+                    Undo last set
+                  </button>
+                ) : null
+              }
             />
-            {done ? (
-              <button type="button" onClick={() => save(undoLast(session))} className="h-11 self-center text-sm text-gym-muted underline-offset-4 hover:underline">
-                Undo last set
-              </button>
-            ) : null}
           </>
         )}
       </main>
@@ -408,7 +435,7 @@ export function GymMode() {
     return <Workout active={active} progress={progress.value} session={current} />;
   }
 
-  const day = active.program.days[progress.value.dayIndex % active.program.days.length];
+  const day = nextDayOf(active.program, progress.value);
   const adjustment = adjustmentFor(progress.value, day.id);
   const adjusted = applyChanges(prescribe(active.program, day, progress.value.state, athlete), adjustment?.changes ?? []);
   const prescriptions = adjusted.filter((p) => p.change?.kind !== "skip");

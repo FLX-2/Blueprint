@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { ServiceWorker } from "@/components/offline";
 import { DEFAULT_THEME, themeInitScript } from "@/lib/theme";
 import "./globals.css";
+import { ViewTransitionGuard } from "@/components/view-transition-guard";
 
 const newsreader = Newsreader({
   variable: "--font-newsreader",
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         {children}
         <ServiceWorker />
+        <ViewTransitionGuard />
       </body>
     </html>
   );

@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import * as z from "zod/v4";
 import { ExtractedProgram } from "@/lib/program/extract-schema";
+import { modelParams } from "@/lib/ai/model";
 
 /**
  * Reads a pasted training program into structure: days, slots and
@@ -41,16 +42,18 @@ export async function POST(request: Request) {
 
   try {
     const client = new Anthropic();
-    const response = await client.beta.messages.parse({
-      model: "claude-opus-5-5",
-      max_tokens: 16000,
-      // Policy declines (unlikely for training programs) retry on Anthropic's recommended model.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "medium", format: betaZodOutputFormat(ExtractedProgram) },
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: `Program text:\n<program>\n${body.data.text}\n</program>` }],
-    });
+    const read = () =>
+      client.beta.messages.parse({
+        ...modelParams(),
+        max_tokens: 16000,
+        output_config: { effort: "medium", format: betaZodOutputFormat(ExtractedProgram) },
+        system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+        messages: [{ role: "user", content: `Program text:\n<program>\n${body.data.text}\n</program>` }],
+      });
+    let response = await read();
+    // A reading with workouts but no progression rules can't run itself. Smaller models
+    // occasionally skip the rules entirely, so read once more before giving up on them.
+    if (response.parsed_output && response.parsed_output.days.length && !response.parsed_output.rules.length) response = await read();
 
     if (response.stop_reason === "refusal") return unavailable("The AI declined to read this text.", 502);
     if (response.stop_reason === "max_tokens") return unavailable("This program is too long to read in one go. Try pasting one block at a time.", 413);

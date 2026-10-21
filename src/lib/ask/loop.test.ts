@@ -21,7 +21,7 @@ const answer = (text: string, resultId = "r1") =>
   toolUse("a1", "show_answer", {
     charts: [{ result_id: resultId, title: "Bench", highlight: null }],
     answer: [{ text, evidence: { result_id: resultId, from: null, to: null } }],
-    caveat: null,
+    caveat: "A pattern, not proof.",
     suggestion: null,
     follow_ups: [],
   });

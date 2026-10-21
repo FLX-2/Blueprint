@@ -9,7 +9,7 @@ import type { Tier } from "@/lib/domain/types";
 import { prescribe, type EventKind } from "@/lib/engine/engine";
 import { formatLoad, formatLongDate } from "@/lib/format";
 import { useActiveProgram } from "@/lib/program/store";
-import { adjustmentFor, useProgress } from "@/lib/train/store";
+import { adjustmentFor, nextDayOf, useProgress } from "@/lib/train/store";
 
 const KIND_LABEL: Record<EventKind, string> = {
   progressed: "Up",
@@ -54,7 +54,7 @@ export function SessionSummary() {
 
   const nameOf = (id: string) => active.exercises.get(id)?.name ?? id;
   const exerciseOf = (key: string) => key.slice(key.indexOf(":") + 1);
-  const next = active.program.days[progress.value.dayIndex % active.program.days.length];
+  const next = nextDayOf(active.program, progress.value);
   const summaryDay = active.program.days.find((d) => d.name === summary.dayName);
   // Next time's targets, with any Bend the week changes for that day.
   const nextTargets = applyChanges(prescribe(active.program, next, progress.value.state, athlete), adjustmentFor(progress.value, next.id)?.changes ?? []).filter(

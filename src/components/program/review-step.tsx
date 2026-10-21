@@ -13,6 +13,7 @@ import { draftIssues, type DraftRule, type DraftSlot, type ProgramDraft } from "
 import { segmentSource, type Mark } from "@/lib/program/source-segments";
 import { RuleEditor } from "./rule-editor";
 import { DayTitle, TierLabel } from "@/components/ui/terms";
+import { GRID_CELL, WorkoutGrid } from "@/components/ui/workout-grid";
 
 export type Selection = { kind: "slot" | "rule"; id: string } | null;
 /** What needed a check when the AI's reading came back, numbered in that order. Numbers stay put as items are resolved. */
@@ -376,9 +377,9 @@ export function ReviewStep({
         <div className="flex min-w-0 flex-[1.4_1_520px] flex-col gap-6">
           <Card>
             <CardHeader title="Workouts" meta={`${draft.days.length} · done in order`} />
-            <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2">
+            <WorkoutGrid count={draft.days.length} max={2} as="div">
               {draft.days.map((day) => (
-                <div key={day.id} className="flex flex-col gap-1 bg-surface px-2 py-3">
+                <div key={day.id} className={cn(GRID_CELL, "flex flex-col gap-1 px-2 py-3")}>
                   <h3 className="m-0 px-3 pb-1 text-base font-semibold">
                     <DayTitle program={draft} day={day} />
                   </h3>
@@ -396,7 +397,7 @@ export function ReviewStep({
                   ))}
                 </div>
               ))}
-            </div>
+            </WorkoutGrid>
           </Card>
 
           <Card>

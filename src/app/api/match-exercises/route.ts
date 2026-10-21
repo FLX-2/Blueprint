@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { exercises } from "@/data/seed/exercises";
 import { MatchRequest, ModelMatches, type MatchResponse } from "@/lib/import/ai-match-schema";
+import { modelParams } from "@/lib/ai/model";
 
 /**
  * Matches exercise names that code couldn't resolve with certainty.
@@ -34,11 +35,8 @@ export async function POST(request: Request) {
   try {
     const client = new Anthropic();
     const response = await client.beta.messages.parse({
-      model: "claude-opus-5-5",
+      ...modelParams(),
       max_tokens: 16000,
-      // Policy declines (rare for exercise names) retry on Anthropic's recommended model.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       output_config: { effort: "low", format: betaZodOutputFormat(ModelMatches) },
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: `Imported names:\n${body.data.names.map((n) => `- ${n}`).join("\n")}` }],

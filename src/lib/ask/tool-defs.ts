@@ -6,6 +6,8 @@ import * as z from "zod/v4";
  *
  * Every field is required; optional ones are nullable. That shape is what
  * strict tool use expects, and it keeps the model explicit about defaults.
+ * Strict schemas allow at most 16 nullable (union-typed) fields across all
+ * tools, so keep new optional fields to a minimum (15 today).
  */
 
 const Date_ = z.string().describe("Calendar date, YYYY-MM-DD.");
@@ -35,7 +37,7 @@ export const ToolInputs = {
     period_b: Period,
   }),
   find_plateaus: z.strictObject({
-    min_weeks: z.number().nullable().describe("Weeks without a new best to count as a plateau. Default 6."),
+    min_weeks: z.number().describe("Weeks without a new best to count as a plateau. Use 6 unless the lifter asks otherwise."),
   }),
   show_answer: z.strictObject({
     charts: z
@@ -58,7 +60,7 @@ export const ToolInputs = {
         }),
       )
       .describe("The answer, 2 to 5 short segments."),
-    caveat: z.string().nullable().describe("One sentence on what the data can't show, e.g. correlation vs cause."),
+    caveat: z.string().describe("One sentence on what the data can't show, e.g. correlation vs cause."),
     suggestion: z.string().nullable().describe("At most one concrete, low-risk training change, or null."),
     follow_ups: z.array(z.string()).describe("Up to 3 short follow-up questions the lifter might ask next."),
   }),

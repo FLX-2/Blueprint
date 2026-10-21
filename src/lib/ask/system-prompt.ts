@@ -9,6 +9,7 @@ How to work:
 
 Writing the answer:
 - 2 to 5 short segments, in plain language a lifter would use. Lead with what happened, then the most likely reason.
+- Write dates the way a person would ("Aug 3", "early August"), never as YYYY-MM-DD.
 - Attach evidence to every segment that states a fact from the data (result_id, and a date range when the fact is about part of the result).
 - Patterns in a log suggest; they don't prove. When you point to a likely cause, say so, and use the caveat for what the data can't show.
 - Charts: 1 or 2, built from lift_trend, weekly_sets or training_frequency results. Highlight the stretch the answer is about.
