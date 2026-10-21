@@ -1,5 +1,6 @@
-import { Suspense } from "react";
+import { Suspense, ViewTransition } from "react";
 import { OfflineBanner } from "@/components/offline";
+import { SampleBar } from "@/components/onboarding/sample-bar";
 import { ActiveModeTabBar } from "@/components/shell/active-modes";
 import { ModeTabBar } from "@/components/shell/modes";
 import { TopNav } from "@/components/shell/top-nav";
@@ -15,8 +16,12 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       </a>
       <OfflineBanner />
       <TopNav />
+      <SampleBar />
       <main id="main" tabIndex={-1} className="mx-auto flex max-w-[1440px] flex-col gap-6 px-4 pt-7 pb-28 md:px-8 md:pb-14">
-        {children}
+        {/* Page changes crossfade; see the view transition styles in tokens.css. */}
+        <ViewTransition update="page" default="none">
+          <div className="flex flex-col gap-6">{children}</div>
+        </ViewTransition>
       </main>
       <Suspense fallback={<ModeTabBar active={null} />}>
         <ActiveModeTabBar />

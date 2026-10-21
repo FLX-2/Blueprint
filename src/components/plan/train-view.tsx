@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { GettingStarted } from "@/components/onboarding/getting-started";
 import { PageHeader } from "@/components/shell/page-header";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
+import { TermsHelp, TierLabel } from "@/components/ui/terms";
+import { dayTitle } from "@/lib/domain/describe";
 import { Tag } from "@/components/ui/text";
 import { athlete } from "@/data/seed";
 import { applyChanges, quoteConstraint } from "@/lib/adapt/changes";
@@ -30,6 +33,7 @@ export function TrainView() {
   const open = session.value && session.value.programId === active.program.id ? session.value : null;
   const logged = open ? open.slots.reduce((n, s) => n + s.sets.filter((x) => x.done).length, 0) : 0;
   const total = open ? open.slots.reduce((n, s) => n + s.sets.length, 0) : 0;
+  const shown = (open && active.program.days.find((d) => d.id === open.dayId)) || day;
   const adjustment = adjustmentFor(progress.value, day.id);
   const upcomingAdjusted = progress.value.adjustments?.length ?? 0;
   const items = applyChanges(prescribe(active.program, day, state, athlete), adjustment?.changes ?? []).map((p) => {
@@ -52,11 +56,13 @@ export function TrainView() {
         trail="Train"
         title={
           <>
-            Day {open ? active.program.days.find((d) => d.id === open.dayId)?.name : day.name},{" "}
+            {dayTitle(active.program, shown).title},{" "}
             <span className="font-normal italic">{open ? "in progress" : "next up"}</span>
           </>
         }
-        meta={`${active.program.name} · ${open ? `${logged} of ${total} sets logged` : `${day.slots.length} exercises`}`}
+        meta={[active.program.name, dayTitle(active.program, shown).code, open ? `${logged} of ${total} sets logged` : `${shown.slots.length} exercises`]
+          .filter(Boolean)
+          .join(" · ")}
         actions={
           <>
             {lastSummary && !open ? (
@@ -69,12 +75,14 @@ export function TrainView() {
                 Something changed?
               </Link>
             ) : null}
-            <Link href="/train/session" className={buttonClasses({ variant: "primary", size: "lg" })}>
+            <Link href="/train/session" className={buttonClasses({ variant: "primary" })}>
               {open ? "Resume session" : "Start session"}
             </Link>
           </>
         }
       />
+
+      <GettingStarted />
 
       {upcomingAdjusted ? (
         <Card className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
@@ -102,20 +110,21 @@ export function TrainView() {
       <Card>
         <CardHeader title="Today’s targets" meta={adjustment ? "Rule engine targets, adjusted for this session" : "Calculated by the rule engine"} />
         <ul className="m-0 list-none p-0">
-          {items.map((item) => (
+          {items.map((item, i) => (
             <li
               key={item.key}
+              style={{ "--i": i } as React.CSSProperties}
               className={cn(
-                "grid grid-cols-[36px_minmax(0,1fr)] gap-x-3 gap-y-1.5 border-b border-border px-5 py-4 last:border-b-0 sm:grid-cols-[36px_minmax(0,1fr)_auto]",
+                "enter-fade grid grid-cols-[minmax(0,1fr)] gap-x-4 gap-y-1.5 border-b border-border px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto]",
                 item.change?.kind === "skip" && "text-muted",
               )}
             >
-              <span className="font-mono text-sm text-muted">{item.slot.tier}</span>
+              <TierLabel tier={item.slot.tier} className="sm:col-span-2" />
               <span className={cn("text-md font-semibold", item.change?.kind === "skip" && "line-through")}>
                 {item.exercise.name} <span className="font-mono text-sm font-medium text-fg-secondary">{item.scheme}</span>{" "}
                 {item.change ? <Tag>{item.change.kind === "swap" ? "Swapped" : item.change.kind === "reduce" ? "Fewer sets" : "Skipped"}</Tag> : null}
               </span>
-              <span className="col-start-2 row-start-2 font-mono text-xl font-medium sm:col-start-3 sm:row-start-1 sm:text-right">
+              <span className="font-mono text-xl font-medium sm:col-start-2 sm:row-start-2 sm:text-right">
                 {item.change?.kind === "skip"
                   ? "—"
                   : item.weight === null
@@ -124,7 +133,7 @@ export function TrainView() {
                       ? "Pick on the day"
                       : formatLoad(item.weight, item.exercise.equipment === "bodyweight")}
               </span>
-              <span className="col-start-2 text-sm text-fg-secondary sm:col-span-2">
+              <span className="text-sm text-fg-secondary sm:col-span-2">
                 {item.change ? (
                   <>
                     {item.change.kind === "swap" && item.original ? <span className="text-muted">Instead of {item.original.name} · </span> : null}
@@ -144,7 +153,7 @@ export function TrainView() {
                 {item.note ? <span className="text-muted"> · {item.note}</span> : null}
               </span>
               {item.plates && item.plates.perSide.length ? (
-                <span className="col-start-2 font-mono text-xs text-muted sm:col-span-2">
+                <span className="font-mono text-xs text-muted sm:col-span-2">
                   Per side: {item.plates.perSide.join(" · ")}
                   {item.plates.rounded ? ` (closest: ${item.plates.total} lb)` : ""}
                 </span>
@@ -152,6 +161,9 @@ export function TrainView() {
             </li>
           ))}
         </ul>
+        <div className="border-t border-border px-5 py-3">
+          <TermsHelp program={active.program} />
+        </div>
       </Card>
     </>
   );

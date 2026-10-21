@@ -19,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. The app runs in demo mode with a fictional athlete and 18 months of generated history.
+Open http://localhost:3000. A first visit opens the welcome screen: start from your own program, your own history, or a sample lifter with 18 months of generated history. Settings → Getting started brings the welcome screen back.
 
 | Script | What it does |
 |---|---|
@@ -53,7 +53,18 @@ Direction "Annotated": Drafting Table clarity with Field Journal's editorial voi
 - **Amber means AI and nothing else:** anything the AI produced that you haven't confirmed (`.ai-mark`, `.ai-proposal`).
 - Tailwind's default palette is removed, so components can only use semantic tokens (`bg-surface`, `text-muted`, `border-ai`…).
 
+- **Plain words first.** Program shorthand stays, as a small tag: "Main lift `T1`", "Workout 4 `B2`". Plan and Train explain the labels in place.
+- **Motion is calm and functional:** short fades and small rises that explain a change. Pages crossfade with the header held still, the mode tab glides, a flow's next step slides in from the side you moved toward, and lists settle in. All of it is off with reduced motion.
+
 Full rules: [design/README.md](design/README.md).
+
+## First run and flows
+
+- **Welcome.** `/` opens the welcome screen until you pick a starting point (or import anything); a cookie then sends `/` straight to the app.
+- **Sample data, labeled.** While the sample program is active, a bar on every screen says so, with the way to your own. A Getting started checklist (look around, import your program, log a session, ask a question) ticks itself off and can be closed.
+- **One shape for every flow.** Program and history import share a stepper you can click back through, a visible title and instruction per step, and a pinned bar with Back and the next action. Bend the week uses the same bar.
+- **Flows start fresh.** Next.js keeps recent pages alive (React `<Activity>`), which used to reopen an import on the step you left. One-off flows now reset on each new visit and still restore on browser back and forward (`FreshOnVisit`).
+- **Clear review.** Only what the AI wasn't sure about is amber, numbered and listed with a running count ("3 of 4 need your check"). Everything read clearly is quiet, with a check, so it's obvious where your attention goes.
 
 ## Seed data
 
@@ -139,5 +150,7 @@ Checked with axe-core (WCAG 2.2 AA plus best practices) on every screen and its 
 - **Phase 2 (Plan + Train):** the rule engine, program import & review (F1) and gym mode logging (F2) are done. Sessions logged offline feed the engine, Review and Ask.
 - **Phase 3 (Adapt):** Bend the week (F3) and Ask bar routing for plan changes are done.
 - **Polish and accessibility:** axe-clean in both themes at both widths, with keyboard and screen reader fixes, error pages and a 404 page.
+- **Onboarding and polish:** welcome screen, sample-data bar and Getting started checklist; plain names for tiers and workouts; one step layout for every flow, with a clearer import review; flows start fresh on each visit; calm motion and cleaner field focus.
+- **Next:** Depth (form check), the third concept.
 
 See [docs/02-structure-and-flows.md](docs/02-structure-and-flows.md).

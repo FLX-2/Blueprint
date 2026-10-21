@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { GettingStarted } from "@/components/onboarding/getting-started";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Eyebrow, Tag } from "@/components/ui/text";
+import { DayTitle, TermsHelp, TierLabel } from "@/components/ui/terms";
+import { Tag } from "@/components/ui/text";
 import { describeRule, formatScheme, ruleTitle } from "@/lib/domain/describe";
 import { formatLongDate } from "@/lib/format";
 import { clearProgram, useActiveProgram } from "@/lib/program/store";
@@ -29,7 +31,7 @@ export function PlanView() {
         title={program.name}
         meta={[
           imported ? `Imported ${formatLongDate(imported.approvedAt.slice(0, 10))}` : "Sample program",
-          `${program.days.length} days · rotate ${program.days.map((d) => d.name).join(" ")}`,
+          `${program.days.length} workouts in rotation`,
           `${confirmed} rules confirmed`,
         ].join(" · ")}
         actions={
@@ -52,24 +54,35 @@ export function PlanView() {
         }
       />
 
+      <GettingStarted />
+
       <Card>
-        <CardHeader title="Days" meta={`${program.days.length} · repeats in order`} />
-        <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 xl:grid-cols-4">
-          {program.days.map((day) => (
-            <div key={day.id} className="flex flex-col gap-2.5 bg-surface px-5 py-4">
+        <CardHeader title="Workouts" meta={`${program.days.length} · done in order, not on set days`} />
+        <ol className="m-0 grid list-none grid-cols-1 gap-px bg-border p-0 sm:grid-cols-2 xl:grid-cols-4">
+          {program.days.map((day, i) => (
+            <li key={day.id} className="enter-fade flex flex-col gap-4 bg-surface px-5 py-4" style={{ "--i": i } as React.CSSProperties}>
               <span className="flex items-center justify-between gap-2">
-                <Eyebrow>Day {day.name}</Eyebrow>
+                <h3 className="m-0 text-md font-semibold">
+                  <DayTitle program={program} day={day} />
+                </h3>
                 {adjusted.has(day.id) ? <Tag>Adjusted next time</Tag> : null}
               </span>
-              {day.slots.map((slot) => (
-                <div key={`${slot.tier}-${slot.exerciseId}`} className="grid grid-cols-[28px_1fr_auto] items-baseline gap-2">
-                  <span className="font-mono text-xs text-muted">{slot.tier}</span>
-                  <span className="text-base font-medium">{nameOf(slot.exerciseId)}</span>
-                  <span className="font-mono text-sm text-fg-secondary">{formatScheme(slot.scheme)}</span>
-                </div>
-              ))}
-            </div>
+              <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                {day.slots.map((slot) => (
+                  <li key={`${slot.tier}-${slot.exerciseId}`} className="flex flex-col gap-1">
+                    <TierLabel tier={slot.tier} />
+                    <span className="flex items-baseline justify-between gap-2">
+                      <span className="text-base font-medium">{nameOf(slot.exerciseId)}</span>
+                      <span className="font-mono text-sm text-fg-secondary">{formatScheme(slot.scheme)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </li>
           ))}
+        </ol>
+        <div className="border-t border-border px-5 py-3">
+          <TermsHelp program={program} />
         </div>
       </Card>
 
@@ -77,17 +90,14 @@ export function PlanView() {
         <CardHeader title="Progression rules" meta="Code runs these exactly" />
         <ul className="m-0 flex list-none flex-col gap-3 p-4">
           {program.rules.map((rule) => (
-            <li key={rule.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-md border border-border px-4 py-3">
-              <span className="text-base font-semibold">
-                <span className="font-mono font-medium text-muted">{rule.tier} · </span>
-                {ruleTitle(rule)}
+            <li key={rule.id} className="flex flex-col gap-1.5 rounded-md border border-border px-4 py-3">
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <TierLabel tier={rule.tier} plural />
+                <span className="text-base font-semibold">{ruleTitle(rule)}</span>
               </span>
-              <Tag tone="confirmed">Confirmed</Tag>
-              <span className="col-span-2 font-mono text-base text-fg-secondary">{describeRule(rule)}</span>
+              <span className="font-mono text-base text-fg-secondary">{describeRule(rule)}</span>
               {imported && rule.source ? (
-                <span className="col-span-2 font-display text-md text-muted italic">
-                  “{imported.sourceText.slice(rule.source.start, rule.source.end)}”
-                </span>
+                <span className="font-display text-md text-muted italic">“{imported.sourceText.slice(rule.source.start, rule.source.end)}”</span>
               ) : null}
             </li>
           ))}

@@ -32,7 +32,7 @@ export function buttonClasses({
   className,
 }: { variant?: ButtonVariant; size?: ButtonSize; className?: string } = {}) {
   return cn(
-    "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition duration-150 ease-standard",
+    "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition duration-150 ease-standard active:scale-[0.98] disabled:active:scale-100",
     "disabled:cursor-not-allowed disabled:bg-surface-raised disabled:text-muted disabled:border-transparent disabled:brightness-100",
     variant === "secondary" || variant === "ghost" ? "font-medium" : null,
     variants[variant],

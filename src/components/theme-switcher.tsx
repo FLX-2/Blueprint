@@ -30,7 +30,11 @@ function applyTheme(theme: Theme) {
   } catch {
     // Storage blocked: the choice still applies for this page view.
   }
-  document.documentElement.setAttribute("data-theme", theme);
+  // Switch every color at once: no cross-fading borders and fields mid-switch.
+  const root = document.documentElement;
+  root.classList.add("theme-switching");
+  root.setAttribute("data-theme", theme);
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
   listeners.forEach((notify) => notify());
 }
 
@@ -53,7 +57,7 @@ export function ThemeSwitcher() {
           aria-pressed={theme === option}
           onClick={() => applyTheme(option)}
           className={cn(
-            "h-9 rounded-sm px-4 text-base font-medium transition-colors duration-150",
+            "h-9 rounded-sm px-4 text-base font-medium transition-colors duration-150 focus-visible:outline-offset-0",
             theme === option
               ? "border border-border bg-surface text-fg"
               : "text-muted hover:text-fg",

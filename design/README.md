@@ -47,3 +47,9 @@ Train sessions always use the `gym-*` surface (`.gym` or `data-mode="train"`), w
 - Elevation comes from surface color + hairline border, not shadows. Shadows only on popovers and menus.
 - Minimum touch target: 44px (`control-md`).
 - Faint background grid (`bg-grid`, 24px) only on Plan and Review canvases, never inside cards.
+
+## Fields, focus and motion
+
+- Field edges use `border-input` (3:1 against page and card). On focus a field's edge turns `focus` with a soft 3px halo; no offset outline on text fields. Wrappers like the Ask bar use `.field`.
+- Motion tokens: fast 120ms, base 200ms, slow 320ms, `ease-standard`. Utilities: `.enter-up` and `.enter-fade` (stagger with `--i`), `.step-forward` / `.step-back` for flow steps, page crossfades via React `<ViewTransition>`. Every one is off under `prefers-reduced-motion`.
+- Theme changes apply instantly (transitions are suspended for the switch).

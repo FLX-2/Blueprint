@@ -8,7 +8,9 @@ import { ChevronLeftIcon } from "@/components/icons";
 import { applyChanges, explainAdjusted } from "@/lib/adapt/changes";
 import { athlete } from "@/data/seed";
 import { useFocusWhenLost } from "@/lib/a11y/focus";
+import { TierLabel } from "@/components/ui/terms";
 import { cn } from "@/lib/cn";
+import { TIER_NAMES, dayLabel, dayTitle } from "@/lib/domain/describe";
 import { useTrainingData } from "@/lib/dataset/training";
 import type { Exercise } from "@/lib/domain/types";
 import { prescribe } from "@/lib/engine/engine";
@@ -50,19 +52,36 @@ const mmss = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-function Stepper({ label, value, onChange, step, min, format }: { label: string; value: number; onChange: (v: number) => void; step: number; min: number; format: (v: number) => string }) {
+function Stepper({
+  label,
+  unit,
+  value,
+  onChange,
+  step,
+  min,
+  format,
+}: {
+  label: string;
+  unit?: string;
+  value: number;
+  onChange: (v: number) => void;
+  step: number;
+  min: number;
+  format: (v: number) => string;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-gym-track px-2 py-1.5">
-      <button type="button" aria-label={`Less ${label}`} onClick={() => onChange(Math.max(min, value - step))} className="flex size-12 items-center justify-center rounded-lg text-2xl text-gym-text hover:bg-gym-track">
+      <button type="button" aria-label={`Less ${label.toLowerCase()}`} onClick={() => onChange(Math.max(min, value - step))} className="flex size-12 items-center justify-center rounded-lg text-2xl text-gym-text hover:bg-gym-track">
         −
       </button>
       <span className="flex flex-col items-center">
         <span className="font-mono text-[11px] tracking-[0.08em] text-gym-muted uppercase">{label}</span>
         <output aria-live="polite" className="num text-xl font-medium">
           {format(value)}
+          {unit ? <span className="ml-1 text-sm text-gym-muted">{unit}</span> : null}
         </output>
       </span>
-      <button type="button" aria-label={`More ${label}`} onClick={() => onChange(value + step)} className="flex size-12 items-center justify-center rounded-lg text-2xl text-gym-text hover:bg-gym-track">
+      <button type="button" aria-label={`More ${label.toLowerCase()}`} onClick={() => onChange(value + step)} className="flex size-12 items-center justify-center rounded-lg text-2xl text-gym-text hover:bg-gym-track">
         +
       </button>
     </div>
@@ -84,7 +103,7 @@ function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exerci
   const logRef = useFocusWhenLost<HTMLButtonElement>();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="step-forward flex flex-col gap-4">
       <p className="m-0 mt-2 flex items-baseline gap-2">
         <span className="font-display text-gym font-medium tracking-[-0.03em]">{needsWeight ? "—" : bodyweight && weight === 0 ? "BW" : weight}</span>
         {needsWeight ? (
@@ -100,7 +119,7 @@ function SetPanel({ session, exercise, onLog }: { session: ActiveSession; exerci
       {plates?.perSide.length ? <p className="m-0 font-mono text-sm text-gym-muted">Per side: {plates.perSide.join(" · ")}</p> : null}
 
       <div className="grid grid-cols-2 gap-2">
-        <Stepper label={bodyweight ? "Added · lb" : "Weight · lb"} value={weight} onChange={setWeight} step={athlete.smallestPlatePair} min={0} format={String} />
+        <Stepper label={bodyweight ? "Added" : "Weight"} unit="lb" value={weight} onChange={setWeight} step={athlete.smallestPlatePair} min={0} format={String} />
         <Stepper label="Reps" value={reps} onChange={setReps} step={1} min={0} format={String} />
       </div>
 
@@ -209,7 +228,7 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
           End
         </button>
         <span className="font-mono text-xs tracking-[0.06em] text-gym-muted">
-          DAY {day.name} · {mmss(now - new Date(session.startedAt).getTime())}
+          {dayLabel(active.program, day).toUpperCase()} · {mmss(now - new Date(session.startedAt).getTime())}
         </span>
         <span className="w-16 text-right font-mono text-[11px] text-gym-muted">{offline ? "Offline · saved" : `${done}/${total}`}</span>
       </header>
@@ -228,7 +247,6 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
                 i === session.cursor.slot ? "border-gym-text text-gym-text" : "border-gym-track text-gym-muted",
               )}
             >
-              <span className="font-mono text-xs">{s.tier}</span>
               {active.exercises.get(s.exerciseId)?.name}
               <span className="num text-xs">
                 {n}/{s.sets.length}
@@ -254,7 +272,7 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
           <>
             <div className="flex justify-between font-mono text-xs tracking-[0.06em] text-gym-muted uppercase">
               <h1 className="m-0 text-xs font-normal">
-                {exercise.name} · {slot.tier} · {slot.scheme}
+                {exercise.name} · {TIER_NAMES[slot.tier].one} ({slot.tier}) · {slot.scheme}
               </h1>
               <span>
                 SET {session.cursor.set + 1}/{slot.sets.length}
@@ -262,7 +280,7 @@ function Workout({ active, progress, session }: { active: ActiveProgram; progres
             </div>
             <div className="flex gap-1.5" aria-hidden="true">
               {slot.sets.map((x, i) => (
-                <div key={i} className={cn("h-1 flex-1 rounded-full", x.done ? "bg-gym-text" : i === session.cursor.set ? "bg-accent" : "bg-gym-track")} />
+                <div key={i} className={cn("h-1 flex-1 rounded-full transition-colors duration-300", x.done ? "bg-gym-text" : i === session.cursor.set ? "bg-accent" : "bg-gym-track")} />
               ))}
             </div>
 
@@ -405,8 +423,10 @@ export function GymMode() {
         </Link>
       </header>
       <main className="mx-auto flex w-full max-w-[440px] flex-1 flex-col gap-5 px-6 pt-6 pb-8">
-        <p className="m-0 font-mono text-xs tracking-[0.06em] text-gym-muted">{active.program.name.toUpperCase()}</p>
-        <h1 className="m-0 font-display text-5xl font-medium tracking-[-0.02em]">Day {day.name}</h1>
+        <p className="m-0 font-mono text-xs tracking-[0.06em] text-gym-muted uppercase">
+          {[active.program.name, dayTitle(active.program, day).code].filter(Boolean).join(" · ")}
+        </p>
+        <h1 className="m-0 font-display text-5xl font-medium tracking-[-0.02em]">{dayTitle(active.program, day).title}</h1>
         {current ? (
           <p className="m-0 rounded-xl border border-gym-track px-4 py-3 text-sm text-gym-muted">
             A session from another program is still open. Starting this one discards it.
@@ -425,10 +445,12 @@ export function GymMode() {
             const bodyweight = exercise.equipment === "bodyweight";
             return (
               <li key={p.key} className={cn("flex items-baseline justify-between gap-3 border-b border-gym-track pb-3", skipped && "text-gym-muted line-through")}>
-                <span>
-                  <span className="font-mono text-xs text-gym-muted">{p.slot.tier} </span>
-                  {exercise.name} <span className="font-mono text-sm text-gym-muted">{p.scheme}</span>
-                  {p.change && !skipped ? <span className="ml-2 font-mono text-[11px] text-gym-muted no-underline">adjusted</span> : null}
+                <span className="flex flex-col gap-0.5">
+                  <TierLabel tier={p.slot.tier} className="text-gym-muted" />
+                  <span>
+                    {exercise.name} <span className="font-mono text-sm text-gym-muted">{p.scheme}</span>
+                    {p.change && !skipped ? <span className="ml-2 font-mono text-[11px] text-gym-muted no-underline">adjusted</span> : null}
+                  </span>
                 </span>
                 <span className="num text-lg">{skipped ? "skip" : top ? (top.weight === 0 && !bodyweight ? "pick" : formatLoad(top.weight, bodyweight)) : "—"}</span>
               </li>

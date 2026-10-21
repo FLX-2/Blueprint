@@ -1,6 +1,7 @@
 import type { Exercise, ExerciseSlot, Program, Rule, SetScheme, SourceSpan, Tier } from "@/lib/domain/types";
 import { AUTO_CONFIRM, matchName, type Suggestion } from "@/lib/import/match";
 import type { ExtractedProgram, ExtractedRule } from "./extract-schema";
+import { TIER_NAMES, dayLabel, ruleTitle } from "@/lib/domain/describe";
 
 /**
  * Turns the model's reading of a program into a draft the lifter reviews.
@@ -188,12 +189,12 @@ export function draftIssues(draft: ProgramDraft) {
   const blocking: Array<{ kind: "slot" | "rule"; id: string; label: string }> = [];
   for (const day of draft.days) {
     for (const slot of day.slots) {
-      if (!slot.confirmed || !slot.exerciseId) blocking.push({ kind: "slot", id: slot.id, label: `${day.name} · ${slot.name}` });
+      if (!slot.confirmed || !slot.exerciseId) blocking.push({ kind: "slot", id: slot.id, label: `${dayLabel(draft, day)} · ${slot.name}` });
     }
   }
   for (const r of draft.rules) {
     // Rules that can't run never block: they're left out, with a warning.
-    if (r.rule && !r.confirmed) blocking.push({ kind: "rule", id: r.id, label: `${r.tier} · ${r.rule.kind.replace(/-/g, " ")}` });
+    if (r.rule && !r.confirmed) blocking.push({ kind: "rule", id: r.id, label: `${TIER_NAMES[r.tier].many} · ${ruleTitle(r.rule).toLowerCase()}` });
   }
 
   const warnings: string[] = [];
@@ -201,10 +202,10 @@ export function draftIssues(draft: ProgramDraft) {
   for (const tier of tiers) {
     const runnable = draft.rules.filter((r) => r.tier === tier && r.rule);
     if (!runnable.some((r) => r.rule!.kind !== "stage-on-failure")) {
-      warnings.push(`${tier} has no progression rule Blueprint can run, so its weights won’t go up on their own.`);
+      warnings.push(`${TIER_NAMES[tier].many} (${tier}) have no progression rule Blueprint can run, so their weights won’t go up on their own.`);
     }
   }
-  for (const r of draft.rules) if (!r.rule) warnings.push(`${r.tier}: ${r.issues.join(" ")} This rule is left out.`);
+  for (const r of draft.rules) if (!r.rule) warnings.push(`${TIER_NAMES[r.tier].many} (${r.tier}): ${r.issues.join(" ")} This rule is left out.`);
   return { blocking, warnings };
 }
 

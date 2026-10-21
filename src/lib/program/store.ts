@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { exercises as library, program as sampleProgram } from "@/data/seed";
 import type { Exercise, Program } from "@/lib/domain/types";
 import type { ProgramState } from "@/lib/engine/engine";
+import { markStarted } from "@/lib/onboarding";
 import { idbDelete, idbGet, idbPut, readFlag, writeFlag } from "@/lib/storage/idb";
 
 /** An approved program, with the starting state the lifter set. Lives in this browser only. */
@@ -65,6 +66,7 @@ export function useActiveProgram(): ProgramStoreState {
 export async function saveProgram(stored: StoredProgram) {
   await idbPut(KEY, stored);
   writeFlag(FLAG, true);
+  markStarted();
   loading = Promise.resolve();
   emit(fromStored(stored));
 }

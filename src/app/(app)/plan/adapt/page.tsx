@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { FreshOnVisit } from "@/components/fresh-on-visit";
 import { AdaptView } from "@/components/plan/adapt-view";
 import { PageHeader } from "@/components/shell/page-header";
 
@@ -9,7 +10,9 @@ export const metadata: Metadata = { title: "Bend the week" };
 export default function AdaptPage() {
   return (
     <Suspense fallback={<PageHeader trail="Plan / Bend the week" title="Bend the week" />}>
-      <AdaptView />
+      <FreshOnVisit>
+        <AdaptView />
+      </FreshOnVisit>
     </Suspense>
   );
 }

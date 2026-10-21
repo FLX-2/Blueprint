@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentType, SVGProps } from "react";
+import { ViewTransition, type ComponentType, type SVGProps } from "react";
 import { PlanIcon, ReviewIcon, TrainIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
@@ -29,13 +29,20 @@ export function ModeTabs({ active }: { active: Mode["href"] | null }) {
           href={href}
           aria-current={active === href ? "page" : undefined}
           className={cn(
-            "flex h-9 items-center rounded-sm px-4 text-base no-underline transition-colors duration-150",
-            active === href
-              ? "border border-border bg-surface font-semibold text-fg"
-              : "font-medium text-muted hover:text-fg",
+            "relative flex h-9 items-center rounded-sm px-4 text-base no-underline transition-colors duration-150 focus-visible:outline-offset-0",
+            active === href ? "font-semibold text-fg" : "font-medium text-muted hover:text-fg",
           )}
         >
-          {label}
+          {active === href ? (
+            // One pill, named, so it glides to the new tab when the page changes.
+            <ViewTransition name="mode-pill">
+              <span className="absolute inset-0 rounded-sm border border-border bg-surface" aria-hidden="true" />
+            </ViewTransition>
+          ) : null}
+          {/* Its own layer above the pill, so the text never disappears while the pill glides. */}
+          <span className="mode-label relative" style={{ viewTransitionName: `mode-label-${label.toLowerCase()}` }}>
+            {label}
+          </span>
         </Link>
       ))}
     </div>

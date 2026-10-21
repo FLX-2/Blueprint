@@ -86,10 +86,10 @@ describe("the GZCLP example", () => {
   it("flags the uncertain rules and the either/or exercise, nothing else", () => {
     const { blocking, warnings } = draftIssues(draft);
     expect(blocking.map((b) => b.label)).toEqual([
-      "A1 · Lat pulldown",
-      "A2 · Lat pulldown",
-      "T1 · stage on failure",
-      "T2 · stage on failure",
+      "Workout 1 (A1) · Lat pulldown",
+      "Workout 3 (A2) · Lat pulldown",
+      "Main lifts · on failure",
+      "Secondary lifts · on failure",
     ]);
     expect(warnings).toEqual([]);
   });
@@ -113,7 +113,7 @@ describe("the GZCLP example", () => {
 
   it("warns when a tier has nothing to progress it", () => {
     const noT3 = { ...draft, rules: draft.rules.filter((r) => r.tier !== "T3") };
-    expect(draftIssues(noT3).warnings[0]).toMatch(/^T3 has no progression rule/);
+    expect(draftIssues(noT3).warnings[0]).toMatch(/^Accessories \(T3\) have no progression rule/);
   });
 });
 

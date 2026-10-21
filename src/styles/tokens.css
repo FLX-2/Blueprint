@@ -276,8 +276,34 @@ body {
   outline-offset: 2px;
 }
 
-/* Headings and regions focused by script (after a step changes) don't need a ring. */
-[tabindex="-1"]:focus:not(:focus-visible) {
+/*
+ * Text fields focus with their own edge plus a soft halo instead of an
+ * offset outline: the border turns the focus color (5.7:1+ in both themes),
+ * the halo just softens it. Wrappers (the Ask bar) use .field.
+ */
+input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.field:focus-within {
+  outline: none;
+  border-color: var(--bp-focus);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--bp-focus) 22%, transparent);
+}
+.field input:focus-visible {
+  box-shadow: none;
+}
+input,
+textarea,
+select,
+.field {
+  transition:
+    border-color var(--bp-duration-fast) var(--bp-ease-standard),
+    box-shadow var(--bp-duration-fast) var(--bp-ease-standard),
+    background-color var(--bp-duration-fast) var(--bp-ease-standard);
+}
+
+/* Headings and regions focused by script (after a step changes) aren't controls: no ring. */
+[tabindex="-1"]:focus {
   outline: none;
 }
 
@@ -336,4 +362,112 @@ body {
 
 @keyframes bp-ink-in {
   to { background-size: 100% 100%; }
+}
+
+/* ---------- Motion ----------
+ * Calm and functional: short fades and small rises that explain a change.
+ * Stagger siblings with style={{ "--i": n }}. Nothing moves with reduced motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .enter-up {
+    animation: bp-enter-up var(--bp-duration-slow) var(--bp-ease-standard) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  .enter-fade {
+    animation: bp-fade var(--bp-duration-base) var(--bp-ease-standard) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  /* A flow's next step slides in from the side you moved toward. */
+  .step-forward {
+    animation: bp-step-forward var(--bp-duration-slow) var(--bp-ease-standard) both;
+  }
+  .step-back {
+    animation: bp-step-back var(--bp-duration-slow) var(--bp-ease-standard) both;
+  }
+}
+
+/* Theme changes apply instantly (see ThemeSwitcher). */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
+/* ---------- Page transitions (React <ViewTransition>) ----------
+ * Changing pages: old content fades out fast, new content settles in.
+ * The header stays put as the fixed reference; the mode pill glides.
+ */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(.page) {
+  animation: 110ms ease-in both bp-vt-out;
+}
+::view-transition-new(.page) {
+  animation: var(--bp-duration-base) var(--bp-ease-standard) 70ms both bp-vt-in;
+}
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+::view-transition-group(mode-pill) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--bp-ease-standard);
+  z-index: 101;
+}
+/* One pill that stretches as it moves, rather than two outlines blending. */
+::view-transition-old(mode-pill) {
+  display: none;
+}
+::view-transition-new(mode-pill) {
+  animation: none;
+  width: 100%;
+  height: 100%;
+}
+/* Tab labels ride above the pill and just cross-fade their weight and color. */
+.mode-label {
+  view-transition-class: mode-label;
+}
+::view-transition-group(.mode-label) {
+  z-index: 102;
+}
+::view-transition-old(.mode-label),
+::view-transition-new(.mode-label) {
+  animation-duration: 160ms;
+}
+@keyframes bp-vt-out {
+  to { opacity: 0; }
+}
+@keyframes bp-vt-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+@keyframes bp-step-forward {
+  from { opacity: 0; transform: translateX(24px); }
+}
+
+@keyframes bp-step-back {
+  from { opacity: 0; transform: translateX(-24px); }
+}
+
+@keyframes bp-enter-up {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes bp-fade {
+  from { opacity: 0; }
 }

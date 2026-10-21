@@ -27,7 +27,7 @@ export function AskBar() {
   return (
     <form
       role="search"
-      className="flex h-10 min-w-0 flex-[1_1_240px] items-center gap-2.5 rounded-md border border-border-input bg-bg px-3.5 text-muted focus-within:border-focus focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
+      className="field flex h-10 min-w-0 flex-[1_1_240px] items-center gap-2.5 rounded-md border border-border-input bg-bg px-3.5 text-muted focus-within:bg-surface focus-within:text-fg-secondary"
       onSubmit={(event) => {
         event.preventDefault();
         const q = inputRef.current?.value.trim() ?? "";

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { isComplete, type ColumnMap } from "@/lib/import/formats";
+import { StepFooter } from "@/components/ui/flow";
 
 const FIELDS: Array<{ key: keyof ColumnMap; label: string; required: boolean }> = [
   { key: "date", label: "Date", required: true },
@@ -85,14 +86,14 @@ export function ColumnMapper({
         </div>
       </Card>
 
-      <div className="flex flex-wrap justify-end gap-2">
+      <StepFooter status={isComplete(map) ? "Every column is mapped." : "Map the required columns to continue."}>
         <Button variant="secondary" onClick={onBack}>
           Choose another file
         </Button>
         <Button variant="primary" onClick={onContinue} disabled={!isComplete(map)}>
           Continue
         </Button>
-      </div>
+      </StepFooter>
     </div>
   );
 }

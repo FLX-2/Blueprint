@@ -6,10 +6,13 @@ const nextConfig: NextConfig = {
     // Connectivity-aware UI (useOffline) and retries of navigations that fail offline.
     useOffline: true,
   },
-  // Demo mode always has an active program. With real accounts, "/" becomes:
-  // today's session if one is scheduled, else /plan, else /welcome.
+  // First visit: "/" opens the welcome screen. Once the lifter picks a
+  // starting point (or imports anything), a cookie sends "/" to the app.
   async redirects() {
-    return [{ source: "/", destination: "/plan", permanent: false }];
+    return [
+      { source: "/", missing: [{ type: "cookie", key: "bp-started" }], destination: "/welcome", permanent: false },
+      { source: "/", destination: "/plan", permanent: false },
+    ];
   },
   async headers() {
     return [

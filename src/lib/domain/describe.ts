@@ -1,8 +1,38 @@
-import type { Program, ProgramDay, Rule, Session, SetScheme } from "./types";
+import type { Program, ProgramDay, Rule, Session, SetScheme, Tier } from "./types";
 
 /** "5×3+" for five sets of three with the last set AMRAP. */
 export function formatScheme(scheme: SetScheme) {
   return `${scheme.sets}×${scheme.reps}${scheme.amrapLast ? "+" : ""}`;
+}
+
+/**
+ * Plain names for tiers, shown first; the program's own code (T1…) rides
+ * along as a small tag for lifters who know it.
+ */
+export const TIER_NAMES: Record<Tier, { one: string; many: string; about: string }> = {
+  T1: { one: "Main lift", many: "Main lifts", about: "Heavy, low reps. The lift the session is built around." },
+  T2: { one: "Secondary", many: "Secondary lifts", about: "Moderate weight, more sets. Builds volume for a main lift." },
+  T3: { one: "Accessory", many: "Accessories", about: "Light, high reps. Muscle and joint health." },
+};
+
+/**
+ * "Workout 1" for a day named with a rotation code ("A1"), keeping the code
+ * as a tag. Days with real names ("Monday", "Upper A") keep their name.
+ */
+type Named = { id: string; name: string };
+
+export function dayTitle(program: { days: Named[] }, day: Named): { title: string; code: string | null } {
+  const index = program.days.findIndex((d) => d.id === day.id);
+  const name = day.name.trim();
+  const isCode = /^[A-Za-z]?\d{0,2}[A-Za-z]?$/.test(name) && name.length <= 3;
+  if (!isCode) return { title: name, code: null };
+  return { title: `Workout ${index + 1}`, code: name === String(index + 1) ? null : name };
+}
+
+/** One-line label, e.g. "Workout 1 (A1)". For places that can't show a tag. */
+export function dayLabel(program: { days: Named[] }, day: Named) {
+  const { title, code } = dayTitle(program, day);
+  return code ? `${title} (${code})` : title;
 }
 
 const RULE_TITLES: Record<Rule["kind"], string> = {

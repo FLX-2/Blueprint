@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { AskReply } from "@/app/api/ask/route";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Eyebrow, Tag } from "@/components/ui/text";
+import { Eyebrow } from "@/components/ui/text";
 import { EXAMPLE_QUESTION, exampleModel } from "@/lib/ask/example-script";
 import { emptyThread, runTurn, type Answer, type CallModel, type Step, type Thread } from "@/lib/ask/loop";
 import { runTool, type ToolResult } from "@/lib/ask/tools";
@@ -16,6 +17,7 @@ import { useTrainingData } from "@/lib/dataset/training";
 import { formatLongDate } from "@/lib/format";
 import { AnswerChart } from "./answer-chart";
 import { EvidencePanel } from "./evidence-panel";
+import { markAsked } from "@/lib/onboarding";
 
 class AskUnavailable extends Error {}
 
@@ -117,7 +119,10 @@ export function AskView() {
       },
     });
     setThread(next);
-    if (outcome.status === "answered") update({ steps: outcome.steps, state: { status: "answered", answer: outcome.answer } });
+    if (outcome.status === "answered") {
+      update({ steps: outcome.steps, state: { status: "answered", answer: outcome.answer } });
+      markAsked();
+    }
     else if (outcome.status === "text") update({ steps: outcome.steps, state: { status: "text", text: outcome.text } });
     else update({ steps: outcome.steps, state: { status: "error", message: outcome.message, unavailable: false } });
   }
@@ -244,7 +249,7 @@ export function AskView() {
               e.preventDefault();
               submit(draft);
             }}
-            className="flex h-12 items-center gap-2 rounded-md border border-border-input bg-surface pr-2 pl-4 focus-within:border-focus focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
+            className="flex h-12 items-center gap-2 field rounded-md border border-border-input bg-surface pr-2 pl-4"
           >
             <input
               value={draft}
@@ -266,7 +271,7 @@ export function AskView() {
               e.preventDefault();
               submit(draft);
             }}
-            className="flex h-12 items-center gap-2 rounded-md border border-border-input bg-surface pr-2 pl-4 focus-within:border-focus focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
+            className="flex h-12 items-center gap-2 field rounded-md border border-border-input bg-surface pr-2 pl-4"
           >
             <input
               value={draft}
@@ -407,12 +412,13 @@ function AnswerBody({
         <section aria-label="Suggestion" className="ai-proposal flex flex-col gap-3 px-5 py-4">
           <span className="font-mono text-xs tracking-[0.08em] text-ai-text uppercase">One thing to try</span>
           <span className="text-md">{input.suggestion}</span>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="primary" disabled>
-              Adjust my plan
-            </Button>
-            <span className="text-sm text-muted">Plan changes arrive with Bend the week (F3).</span>
-          </div>
+          <span className="text-sm text-fg-secondary">
+            A suggestion, not a change. Your plan only changes when you change it: edit your program and{" "}
+            <Link href="/plan/import" className="font-medium text-link underline-offset-4 hover:underline">
+              import it again
+            </Link>
+            .
+          </span>
         </section>
       ) : null}
 
@@ -425,7 +431,7 @@ function AnswerBody({
           ))}
         </div>
       ) : null}
-      {scripted ? <Tag>Follow-ups need a live AI</Tag> : null}
+      {scripted ? <p className="m-0 text-sm text-muted">Follow-up questions need a live AI connection.</p> : null}
     </>
   );
 }

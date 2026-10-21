@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { idbDelete, idbGet, idbPut, readFlag, writeFlag } from "@/lib/storage/idb";
 import { datasetFromImport, sampleDataset, type Dataset, type StoredImport } from "./dataset";
+import { markStarted } from "@/lib/onboarding";
 
 /**
  * Imported history lives in this browser only (IndexedDB): the file is
@@ -53,6 +54,7 @@ export function useDataset(): DatasetState {
 
 export async function saveImport(stored: StoredImport) {
   await idbPut(KEY, stored);
+  markStarted();
   writeFlag(FLAG, true);
   loading = Promise.resolve();
   emit({ status: "ready", dataset: datasetFromImport(stored) });

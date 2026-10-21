@@ -8,6 +8,7 @@ import type { Unit } from "@/lib/domain/types";
 import { formatLongDate } from "@/lib/format";
 import type { ImportFormat } from "@/lib/import/formats";
 import { SKIP_LABELS, type ImportSummary, type SkipReason } from "@/lib/import/rows";
+import { StepFooter } from "@/components/ui/flow";
 
 const FORMAT_LABELS: Record<ImportFormat, string> = { strong: "Strong export", hevy: "Hevy export", generic: "Custom columns" };
 
@@ -106,14 +107,14 @@ export function PreviewStep({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap justify-end gap-2">
+      <StepFooter status={empty ? "No working sets found." : `${summary.names.length} exercise names to match next.`}>
         <Button variant="secondary" onClick={onBack}>
           Back
         </Button>
         <Button variant="primary" onClick={onContinue} disabled={empty}>
           Clean up {summary.names.length} exercise names
         </Button>
-      </div>
+      </StepFooter>
     </div>
   );
 }

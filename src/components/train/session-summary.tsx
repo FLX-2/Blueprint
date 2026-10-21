@@ -4,6 +4,8 @@ import Link from "next/link";
 import { athlete } from "@/data/seed";
 import { applyChanges } from "@/lib/adapt/changes";
 import { cn } from "@/lib/cn";
+import { TIER_NAMES, dayLabel } from "@/lib/domain/describe";
+import type { Tier } from "@/lib/domain/types";
 import { prescribe, type EventKind } from "@/lib/engine/engine";
 import { formatLoad, formatLongDate } from "@/lib/format";
 import { useActiveProgram } from "@/lib/program/store";
@@ -53,6 +55,7 @@ export function SessionSummary() {
   const nameOf = (id: string) => active.exercises.get(id)?.name ?? id;
   const exerciseOf = (key: string) => key.slice(key.indexOf(":") + 1);
   const next = active.program.days[progress.value.dayIndex % active.program.days.length];
+  const summaryDay = active.program.days.find((d) => d.name === summary.dayName);
   // Next time's targets, with any Bend the week changes for that day.
   const nextTargets = applyChanges(prescribe(active.program, next, progress.value.state, athlete), adjustmentFor(progress.value, next.id)?.changes ?? []).filter(
     (p) => p.change?.kind !== "skip",
@@ -61,9 +64,9 @@ export function SessionSummary() {
   return (
     <div className="gym min-h-dvh">
       <main className="mx-auto flex w-full max-w-[560px] flex-col gap-8 px-6 pt-10 pb-12">
-        <div className="flex flex-col gap-2">
+        <div className="enter-up flex flex-col gap-2">
           <p className="m-0 font-mono text-xs tracking-[0.06em] text-gym-muted">
-            DAY {summary.dayName} · {formatLongDate(summary.date).toUpperCase()}
+            {(summaryDay ? dayLabel(active.program, summaryDay) : `Day ${summary.dayName}`).toUpperCase()} · {formatLongDate(summary.date).toUpperCase()}
           </p>
           <h1 className="m-0 font-display text-5xl font-medium tracking-[-0.02em]">
             Session <span className="font-normal italic">done.</span>
@@ -102,11 +105,13 @@ export function SessionSummary() {
         <section aria-label="What the rules decided" className="flex flex-col gap-3">
           <h2 className="m-0 font-mono text-xs tracking-[0.08em] text-gym-muted uppercase">What the rules decided</h2>
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
-            {summary.events.map((e) => (
-              <li key={e.key} className="flex flex-col gap-1 border-b border-gym-track pb-3">
+            {summary.events.map((e, i) => (
+              <li key={e.key} className="enter-up flex flex-col gap-1 border-b border-gym-track pb-3" style={{ "--i": i + 2 } as React.CSSProperties}>
                 <span className="flex items-baseline justify-between gap-3">
                   <span className="font-semibold">
-                    <span className="font-mono text-xs font-normal text-gym-muted">{e.key.split(":")[0]} </span>
+                    <span className="block font-mono text-[11px] font-normal tracking-[0.08em] text-gym-muted uppercase">
+                      {TIER_NAMES[e.key.split(":")[0] as Tier]?.one ?? e.key.split(":")[0]}
+                    </span>
                     {nameOf(exerciseOf(e.key))}
                   </span>
                   <span
@@ -126,7 +131,7 @@ export function SessionSummary() {
         </section>
 
         <section aria-label="Next up" className="flex flex-col gap-3 rounded-xl border border-gym-track p-4">
-          <h2 className="m-0 font-mono text-xs tracking-[0.08em] text-gym-muted uppercase">Next up · Day {next.name}</h2>
+          <h2 className="m-0 font-mono text-xs tracking-[0.08em] text-gym-muted uppercase">Next up · {dayLabel(active.program, next)}</h2>
           {nextTargets.map((p) => {
             const top = p.sets?.at(-1);
             const exercise = active.exercises.get(p.slot.exerciseId);

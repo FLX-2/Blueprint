@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/shell/page-header";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { ReplayWelcome } from "@/components/onboarding/replay-welcome";
 import { TrainingLogSetting } from "@/components/train/training-settings";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -27,6 +28,13 @@ export default function SettingsPage() {
         <CardHeader title="Appearance" />
         <Row label="Theme">
           <ThemeSwitcher />
+        </Row>
+      </Card>
+
+      <Card className="max-w-[720px]">
+        <CardHeader title="Getting started" />
+        <Row label="Welcome screen and checklist">
+          <ReplayWelcome />
         </Row>
       </Card>
 

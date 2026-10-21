@@ -22,12 +22,14 @@ import {
 import { EXAMPLE_CONSTRAINT, EXAMPLE_GYM_ID, EXAMPLE_PROPOSALS, EXAMPLE_SUMMARY } from "@/lib/adapt/example";
 import type { AdaptReply, AdaptRequest } from "@/lib/adapt/schema";
 import { restoreFocus, useFocusWhenLost } from "@/lib/a11y/focus";
+import { DayTitle, TierLabel } from "@/components/ui/terms";
 import { cn } from "@/lib/cn";
 import { useTrainingData } from "@/lib/dataset/training";
-import type { Exercise, GymProfile } from "@/lib/domain/types";
+import type { Exercise, GymProfile, Program } from "@/lib/domain/types";
 import { formatLoad } from "@/lib/format";
 import { useActiveProgram, type ActiveProgram } from "@/lib/program/store";
 import { progressStore, useProgress, type Progress } from "@/lib/train/store";
+import { StepFooter } from "@/components/ui/flow";
 
 const STARTERS: Array<{ label: string; text: string; gym?: string }> = [
   { label: "Traveling", text: "Traveling for my next three sessions, hotel gym only.", gym: "hotel" },
@@ -61,7 +63,13 @@ export function AdaptView() {
   if (!active || progress.status !== "ready" || data.status !== "ready") {
     return <PageHeader trail="Plan / Bend the week" title="Loading your program…" />;
   }
-  return <Adapt active={active} progress={progress.value} sessions={data.dataset.sessions} end={data.dataset.end} />;
+  return <AdaptWithQuery active={active} progress={progress.value} sessions={data.dataset.sessions} end={data.dataset.end} />;
+}
+
+/** A new constraint from the Ask bar (same page, new ?c=) starts a fresh proposal. */
+function AdaptWithQuery(props: Parameters<typeof Adapt>[0]) {
+  const c = useSearchParams().get("c") ?? "";
+  return <Adapt key={c} {...props} />;
 }
 
 function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; progress: Progress; sessions: Parameters<typeof checkProposals>[0]["sessions"]; end: string }) {
@@ -178,31 +186,29 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
 
       {proposal ? (
         <ProposalView
+          program={program}
           proposal={proposal}
           exercises={exercises}
           decisions={decisions}
           onDecide={(i, d) => setDecisions((prev) => ({ ...prev, [i]: d }))}
           onAcceptAll={() => setDecisions(Object.fromEntries(proposal.accepted.map((_, i) => [i, "accepted" as const])))}
           footer={
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm text-muted">
-                {acceptedCount} of {proposal.accepted.length} accepted{undecided ? ` · ${undecided} still to decide` : ""}. The program and its rules don’t change.
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setProposal(null);
-                    requestAnimationFrame(() => constraintRef.current?.focus());
-                  }}
-                >
-                  Start over
-                </Button>
-                <Button variant="primary" onClick={apply} disabled={!acceptedCount}>
-                  Apply {acceptedCount ? `${acceptedCount} ${acceptedCount === 1 ? "change" : "changes"}` : "changes"}
-                </Button>
-              </div>
-            </div>
+            <StepFooter
+              status={`${acceptedCount} of ${proposal.accepted.length} accepted${undecided ? ` · ${undecided} still to decide` : ""}. Your program and its rules don’t change.`}
+            >
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setProposal(null);
+                  requestAnimationFrame(() => constraintRef.current?.focus());
+                }}
+              >
+                Start over
+              </Button>
+              <Button variant="primary" onClick={apply} disabled={!acceptedCount}>
+                Apply {acceptedCount ? `${acceptedCount} ${acceptedCount === 1 ? "change" : "changes"}` : "changes"}
+              </Button>
+            </StepFooter>
           }
         />
       ) : (
@@ -227,7 +233,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
                 onChange={(e) => setConstraint(e.target.value)}
                 rows={3}
                 placeholder="Traveling, a different gym, less time, feeling run down…"
-                className="min-h-28 resize-y rounded-md border border-border-input bg-bg p-4 font-display text-lg leading-[1.6] text-fg placeholder:text-muted focus:border-focus"
+                className="min-h-28 resize-y rounded-md border border-border-input bg-bg p-4 font-display text-lg leading-[1.6] text-fg placeholder:text-muted"
               />
             </label>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Common reasons">
@@ -251,7 +257,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
                 <select
                   value={gymId}
                   onChange={(e) => setGymId(e.target.value)}
-                  className="h-11 rounded-md border border-border-input bg-bg px-3 text-base text-fg focus:border-focus"
+                  className="h-11 rounded-md border border-border-input bg-bg px-3 text-base text-fg"
                 >
                   <option value="">Your usual gym</option>
                   {gyms
@@ -269,7 +275,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
                 <select
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
-                  className="h-11 rounded-md border border-border-input bg-bg px-3 text-base text-fg focus:border-focus"
+                  className="h-11 rounded-md border border-border-input bg-bg px-3 text-base text-fg"
                 >
                   {Array.from({ length: Math.max(4, program.days.length) }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>
@@ -309,6 +315,7 @@ function Adapt({ active, progress, sessions, end }: { active: ActiveProgram; pro
 }
 
 function ProposalView({
+  program,
   proposal,
   exercises,
   decisions,
@@ -322,6 +329,7 @@ function ProposalView({
   onDecide: (index: number, d: Decision) => void;
   onAcceptAll: () => void;
   footer: ReactNode;
+  program: Program;
 }) {
   const chosen = proposal.accepted.filter((_, i) => decisions[i] !== "declined");
   const effects = effectsOf(proposal.upcoming, chosen, exercises);
@@ -368,7 +376,7 @@ function ProposalView({
                 <CardHeader
                   title={
                     <>
-                      {u.position === 0 ? "Next" : `+${u.position}`} · Day {u.day.name}
+                      {u.position === 0 ? "Next" : `Then`} · <DayTitle program={program} day={u.day} />
                     </>
                   }
                   meta={indexed.length ? `${indexed.length} proposed ${indexed.length === 1 ? "change" : "changes"}` : "Unchanged"}
@@ -379,8 +387,8 @@ function ProposalView({
                     const original = nameOf(p.slot.exerciseId);
                     if (!hit) {
                       return (
-                        <li key={p.key} className="grid grid-cols-[36px_minmax(0,1fr)_auto] gap-3 border-b border-border px-5 py-3 text-fg-secondary last:border-b-0">
-                          <span className="font-mono text-sm text-muted">{p.slot.tier}</span>
+                        <li key={p.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-b border-border px-5 py-3 text-fg-secondary last:border-b-0">
+                          <TierLabel tier={p.slot.tier} className="col-span-2" />
                           <span>
                             {original} <span className="font-mono text-sm">{p.scheme}</span>
                           </span>
@@ -508,8 +516,8 @@ function ChangeRow({
         decision === "declined" && "opacity-60",
       )}
     >
-      <div className="grid grid-cols-[36px_minmax(0,1fr)] gap-x-3 gap-y-1.5 sm:grid-cols-[36px_minmax(0,1fr)_auto]">
-        <span className="font-mono text-sm text-muted">{after.slot.tier}</span>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <TierLabel tier={after.slot.tier} className="sm:col-span-2" />
         <span className="flex flex-col gap-1">
           <span className="text-sm text-muted line-through">
             {original} {before.scheme} · {before.weight}
@@ -526,10 +534,10 @@ function ChangeRow({
             <Tag tone={decision === "accepted" ? "confirmed" : decision ? "neutral" : "ai"}>{label}</Tag>
           </span>
         </span>
-        <span className="col-start-2 font-mono text-lg sm:col-start-3 sm:row-start-1 sm:text-right">
+        <span className="font-mono text-lg sm:col-start-2 sm:row-start-2 sm:text-right">
           {c.kind === "skip" ? "—" : weightOf(after.sets?.at(-1)?.weight ?? null, replacement ?? exercises.get(after.slot.exerciseId))}
         </span>
-        <span className="col-start-2 text-sm text-fg-secondary sm:col-span-2">
+        <span className="text-sm text-fg-secondary sm:col-span-2">
           {c.reason}
           {c.kind === "swap" && c.estimatedFrom ? (
             <span className="text-muted">
@@ -541,12 +549,12 @@ function ChangeRow({
           ) : null}
         </span>
         {change.warnings.map((w) => (
-          <span key={w} className="col-start-2 text-sm text-ai-text sm:col-span-2">
+          <span key={w} className="text-sm text-ai-text sm:col-span-2">
             Check: {w}
           </span>
         ))}
       </div>
-      <div className="flex gap-2 pl-[48px]" role="group" aria-label={c.kind === "swap" ? `Swap ${original} for ${replacement?.name ?? c.exerciseId}` : `${label}: ${original}`}>
+      <div className="flex gap-2" role="group" aria-label={c.kind === "swap" ? `Swap ${original} for ${replacement?.name ?? c.exerciseId}` : `${label}: ${original}`}>
         <Button size="sm" variant={decision === "accepted" ? "ink" : "secondary"} aria-pressed={decision === "accepted"} onClick={() => onDecide("accepted")}>
           {decision === "accepted" ? "Accepted" : "Accept"}
         </Button>

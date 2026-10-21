@@ -6,6 +6,7 @@ import { Tag } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 import type { Exercise } from "@/lib/domain/types";
 import { groupDecisions, newTarget, targetLabel, type Decision, type Group, type Target } from "@/lib/import/decisions";
+import { StepFooter } from "@/components/ui/flow";
 
 export type AiState =
   | { status: "idle" }
@@ -217,19 +218,14 @@ export function NameCleanup(props: Props) {
         </Card>
       ) : null}
 
-      <div className="sticky bottom-20 z-10 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface py-3 pr-3 pl-4 md:bottom-4 md:pl-5">
-        <span className="min-w-0 text-sm text-fg-secondary md:text-base">
-          {waiting ? "Waiting for AI…" : remaining ? `${remaining} to confirm` : "Ready to import"}
-        </span>
-        <div className="flex shrink-0 gap-2">
-          <Button variant="secondary" onClick={props.onBack} disabled={importing}>
-            Back
-          </Button>
-          <Button variant="primary" onClick={props.onImport} disabled={remaining > 0 || waiting || importing}>
-            {importing ? "Importing…" : "Import history"}
-          </Button>
-        </div>
-      </div>
+      <StepFooter status={waiting ? "Waiting for the AI…" : remaining ? `${remaining} still to confirm` : "Ready to import."}>
+        <Button variant="secondary" onClick={props.onBack} disabled={importing}>
+          Back
+        </Button>
+        <Button variant="primary" onClick={props.onImport} disabled={remaining > 0 || waiting || importing}>
+          {importing ? "Importing…" : "Import history"}
+        </Button>
+      </StepFooter>
     </div>
   );
 }

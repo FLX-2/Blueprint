@@ -7,7 +7,7 @@ import { ModeTabs } from "./modes";
 
 export function TopNav() {
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-surface">
+    <header className="sticky top-0 z-20 border-b border-border bg-surface" style={{ viewTransitionName: "site-header" }}>
       <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 md:px-6">
         <Link href="/plan" className="font-display text-2xl font-semibold tracking-[-0.01em] text-fg no-underline">
           Blueprint

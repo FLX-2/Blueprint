@@ -1,6 +1,6 @@
 import { liftTrend, roundToLoadable } from "@/lib/calc/strength";
 import type { Dataset } from "@/lib/dataset/dataset";
-import type { Athlete, Exercise, Program } from "@/lib/domain/types";
+import type { Athlete, Exercise, Program, Tier } from "@/lib/domain/types";
 import { currentScheme, rulesFor, slotKey, type ProgramState, type SlotKey } from "@/lib/engine/engine";
 
 /**
@@ -14,7 +14,7 @@ export type StartInput = {
   /** Bodyweight lifts take added weight, so 0 is a valid start. */
   bodyweight: boolean;
   exerciseId: string;
-  tier: string;
+  tier: Tier;
   scheme: string;
   /** What the number means for this slot. */
   field: "weight" | "trainingMax";
